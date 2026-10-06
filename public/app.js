@@ -15,8 +15,11 @@ const isLocalUser=()=>!!state.user?.local;
 const localToken=()=>state.user?.local?state.token:"";
 const localAccountKey=(email)=>"mp_local_account_"+String(email||"").trim().toLowerCase();
 async function api(url,opt={}){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7000);
+ opt.signal=opt.signal||controller.signal;
  opt.headers={...(opt.headers||{}),...(state.token?{Authorization:"Bearer "+state.token}:{})};
- const r=await fetch(API_BASE+url,opt),d=await r.json().catch(()=>({}));
+ let r;try{r=await fetch(API_BASE+url,opt)}finally{clearTimeout(timer)}
+ const d=await r.json().catch(()=>({}));
  if(!r.ok)throw Error(d.error||"Não foi possível concluir a operação");
  return d;
 }
