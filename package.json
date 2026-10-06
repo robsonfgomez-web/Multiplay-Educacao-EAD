@@ -1,10 +1,22 @@
 {
-  "name":"multiplay-educacao-ead",
-  "version":"1.2.0",
-  "private":true,
-  "type":"module",
-  "scripts":{"start":"node server.js","build:mobile":"npx cap sync android"},
-  "dependencies":{"express":"^5.1.0","pg":"^8.16.3","@capacitor/core":"^7.4.4","@capacitor/android":"^7.4.4"},
-  "devDependencies":{"@capacitor/cli":"^7.4.4"},
-  "engines":{"node":">=22"}
+  "name": "multiplay-educacao-ead",
+  "version": "1.2.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "build:mobile": "npx cap sync android"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/android": "^7.4.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }
