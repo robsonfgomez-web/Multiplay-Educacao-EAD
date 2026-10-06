@@ -1,6 +1,13 @@
 {
-  "appId":"br.com.multiplay.educacao",
-  "appName":"Multiplay Educação",
-  "webDir":"public",
-  "androidScheme":"https"
+  "appId": "br.com.multiplay.educacao",
+  "appName": "Multiplay Educação",
+  "webDir": "public",
+  "androidScheme": "https",
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#07111f"
+    }
+  }
 }
