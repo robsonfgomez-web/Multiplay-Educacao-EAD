@@ -11,6 +11,9 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&g
 const lessons=c=>c?.modules?.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})))||[];
 const pct=c=>{const a=lessons(c);return a.length?Math.round(a.filter(x=>state.done[c.id+"_"+x.id]).length/a.length*100):0};
 const key=()=>state.course.id+"_"+state.lesson.id;
+const isLocalUser=()=>!!state.user?.local;
+const localToken=()=>state.user?.local?state.token:"";
+const localAccountKey=(email)=>"mp_local_account_"+String(email||"").trim().toLowerCase();
 async function api(url,opt={}){
  opt.headers={...(opt.headers||{}),...(state.token?{Authorization:"Bearer "+state.token}:{})};
  const r=await fetch(API_BASE+url,opt),d=await r.json().catch(()=>({}));
@@ -20,9 +23,11 @@ async function api(url,opt={}){
 async function init(){
  try{const r=await fetch("/courses.json",{cache:"no-store"});state.courses=await r.json();home()}catch(_){app.innerHTML='<section class="section"><div class="empty">Carregando a plataforma...</div></section>'}
  try{const c=new AbortController(),t=setTimeout(()=>c.abort(),6000),r=await fetch(API_BASE+"/api/courses",{signal:c.signal,cache:"no-store"});clearTimeout(t);if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length){state.courses=d;home()}}}catch(_){}
- if(state.token){
+ if(state.token&&!isLocalUser()){
   try{const p=await api("/api/progress");p.forEach(x=>state.done[x.course_id+"_"+x.lesson_id]=true);localStorage.setItem("mp_done",JSON.stringify(state.done))}catch(_){}
   try{const q=await api("/api/lesson-state");q.forEach(x=>state.quizPassed[x.course_id+"_"+x.lesson_id]=!!x.quiz_passed);localStorage.setItem("mp_quiz_passed",JSON.stringify(state.quizPassed))}catch(_){}
+  try{const e=await api("/api/my/enrollments");state.enrollments=e.map(x=>x.courseId||x.course_id);localStorage.setItem("mp_enrollments",JSON.stringify(state.enrollments))}catch(_){}
+  try{state.history=await api("/api/my/history")}catch(_){state.history=[]}
  }
  updateAccount();
 }
@@ -39,25 +44,52 @@ function home(){
 }
 function catalog(category=""){
  state.page="catalog";
- app.innerHTML='<section class="section"><div class="section-title"><div><h1>Catálogo de cursos</h1><p class="muted">Pesquise por curso, área ou nível.</p></div></div><div class="catalog-tools"><input class="field" id="q" placeholder="Buscar curso..." value=""><select class="field" id="cat"><option value="">Todas as áreas</option>'+[...new Set(state.courses.map(c=>c.category))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>'<option>'+esc(x)+'</option>').join("")+'</select><select class="field" id="level"><option value="">Todos os níveis</option><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select></div><div class="grid" id="grid"></div></section>';
+ app.innerHTML='<section class="section"><div class="section-title"><div><h1>Catálogo de cursos</h1><p class="muted">Pesquise por curso, área ou nível.</p></div><button class="outline filter-reset" id="resetFilters">Limpar filtros</button></div><div class="catalog-tools"><input class="field" id="q" placeholder="Buscar curso..." value=""><select class="field" id="cat"><option value="">Todas as áreas</option>'+[...new Set(state.courses.map(c=>c.category))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select><select class="field" id="level"><option value="">Todos os níveis</option><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select></div><div class="catalog-summary" id="catalogSummary"></div><div class="grid" id="grid"></div></section>';
  const q=document.getElementById("q"),cat=document.getElementById("cat"),level=document.getElementById("level");cat.value=category;
- const render=()=>{const s=q.value.toLowerCase(),c=cat.value,l=level.value;document.getElementById("grid").innerHTML=state.courses.filter(x=>(!s||(x.title+" "+x.category+" "+x.description).toLowerCase().includes(s))&&(!c||x.category===c)&&(!l||x.level===l)).sort((a,b)=>a.title.localeCompare(b.title,"pt-BR")).map(card).join("")||'<div class="empty">Nenhum curso encontrado.</div>';bind()};
- [q,cat,level].forEach(x=>x.oninput=x.onchange=render);render();
+ const render=()=>{const s=q.value.trim().toLowerCase(),c=cat.value,l=level.value;const items=state.courses.filter(x=>(!s||(x.title+" "+x.category+" "+x.description).toLowerCase().includes(s))&&(!c||x.category===c)&&(!l||x.level===l)).sort((a,b)=>a.title.localeCompare(b.title,"pt-BR"));document.getElementById("catalogSummary").textContent=items.length+" curso"+(items.length===1?"":"s")+" encontrado"+(items.length===1?"":"s");document.getElementById("grid").innerHTML=items.map(card).join("")||'<div class="empty"><h3>Nenhum curso encontrado</h3><p>Altere os filtros ou toque em “Limpar filtros” para ver o catálogo completo.</p></div>';bind()};
+ [q,cat,level].forEach(x=>x.oninput=x.onchange=render);
+ document.getElementById("resetFilters").onclick=()=>{q.value="";cat.value="";level.value="";render()};
+ render();
 }
 function my(){
- state.page="my";const list=state.courses.filter(c=>pct(c)>0);
- app.innerHTML='<section class="section"><div class="section-title"><div><h1>Meus cursos</h1><p class="muted">Continue exatamente de onde parou.</p></div></div>'+ (list.length?'<div class="grid">'+list.map(card).join("")+'</div>':'<div class="empty"><h3>Você ainda não iniciou um curso.</h3><p>Escolha uma formação no catálogo para começar.</p><button class="btn" data-page="catalog">Explorar cursos</button></div>')+'</section>';
+ state.page="my";
+ const ids=new Set([...state.enrollments,...state.courses.filter(c=>pct(c)>0).map(c=>c.id)]);
+ const list=state.courses.filter(c=>ids.has(c.id));
+ app.innerHTML='<section class="section"><div class="section-title"><div><h1>Meus cursos</h1><p class="muted">Cursos matriculados e em andamento.</p></div></div>'+ (list.length?'<div class="grid">'+list.map(card).join("")+'</div>':'<div class="empty"><h3>Você ainda não tem cursos aqui.</h3><p>Escolha uma formação no catálogo para começar.</p><button class="btn" data-page="catalog">Explorar cursos</button></div>')+'</section>';
  bind();
 }
 function library(){
  state.page="library";
  const books=[
- ["Comunicação Profissional","Leitura complementar","https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=700&q=85"],
- ["Aprender e Ensinar","Metodologias de estudo","https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=700&q=85"],
- ["English Practice","Idiomas","https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=700&q=85"],
- ["Gestão e Carreira","Desenvolvimento profissional","https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=700&q=85"]
+  {title:"Comunicação Profissional",type:"E-book",cover:"https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=700&q=85",text:"Comunicação profissional envolve clareza, objetividade, escuta ativa e adaptação da mensagem ao público. Use este material como leitura complementar às aulas da Multiplay."},
+  {title:"Aprender e Ensinar",type:"Livro",cover:"https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=700&q=85",text:"Estudar melhor depende de rotina, revisão, prática e organização. Divida o conteúdo em etapas e registre dúvidas durante o estudo."},
+  {title:"English Practice",type:"E-book",cover:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=700&q=85",text:"Practice English with simple phrases, vocabulary review and short daily exercises. Repeat, read aloud and build confidence gradually."},
+  {title:"Gestão e Carreira",type:"Audiobook",cover:"https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=700&q=85",text:"Planeje sua carreira, desenvolva competências e transforme objetivos profissionais em ações concretas."}
  ];
- app.innerHTML='<section class="section"><div class="section-title"><div><h1>Biblioteca Multiplay</h1><p class="muted">Livros, e-books e materiais complementares.</p></div></div><div class="library-tabs"><button class="btn">E-books</button><button class="outline">Livros</button><button class="outline">Audiobooks</button></div><div class="books">'+books.map(x=>'<article class="book"><img src="'+x[2]+'"><div class="card-body"><span class="pill">'+x[1]+'</span><h3>'+x[0]+'</h3><p class="muted">Material complementar para seus estudos.</p><button class="outline" data-book="'+esc(x[0])+'">Abrir material</button></div></article>').join("")+'</div></section>';bind();
+ const render=(type="Todos")=>{
+  const items=type==="Todos"?books:books.filter(b=>b.type===type);
+  app.innerHTML='<section class="section"><div class="section-title"><div><h1>Biblioteca Multiplay</h1><p class="muted">Materiais complementares para estudar dentro da plataforma.</p></div></div><div class="library-tabs"><button class="'+(type==="Todos"?"btn":"outline")+'" data-libtab="Todos">Todos</button><button class="'+(type==="E-book"?"btn":"outline")+'" data-libtab="E-book">E-books</button><button class="'+(type==="Livro"?"btn":"outline")+'" data-libtab="Livro">Livros</button><button class="'+(type==="Audiobook"?"btn":"outline")+'" data-libtab="Audiobook">Audiobooks</button></div><div class="books">'+items.map((x,i)=>'<article class="book"><img src="'+x.cover+'" alt=""><div class="card-body"><span class="pill">'+x.type+'</span><h3>'+esc(x.title)+'</h3><p class="muted">Material complementar para seus estudos.</p><button class="outline" data-book="'+i+'" data-book-type="'+x.type+'">Abrir material</button></div></article>').join("")+'</div><div id="reader" class="reader" hidden></div></section>';
+  document.querySelectorAll("[data-libtab]").forEach(b=>b.onclick=()=>render(b.dataset.libtab));
+  document.querySelectorAll("[data-book]").forEach(b=>b.onclick=()=>openMaterial(books.find(x=>x.type===b.dataset.bookType&&items.indexOf(x)>=0)||books.find(x=>x.type===b.dataset.bookType)));
+ };
+ render();
+}
+function openMaterial(book){
+ const reader=document.getElementById("reader");if(!reader)return;
+ reader.hidden=false;
+ const audio=book.type==="Audiobook"?'<button class="btn" id="speak">▶ Ouvir este material</button><button class="outline" id="stopSpeak">■ Parar</button>':"";
+ reader.innerHTML='<div class="reader-card"><div class="section-title"><div><span class="pill">'+esc(book.type)+'</span><h2>'+esc(book.title)+'</h2></div><button class="outline" id="closeReader">Fechar</button></div><div class="reader-content"><p>'+esc(book.text)+'</p><p>'+esc(book.text)+'</p></div>'+audio+'</div>';
+ document.getElementById("closeReader").onclick=()=>{reader.hidden=true;if("speechSynthesis" in window)speechSynthesis.cancel()};
+ if(book.type==="Audiobook"&&"speechSynthesis" in window){
+  document.getElementById("speak").onclick=()=>speechSynthesis.speak(new SpeechSynthesisUtterance(book.text+" "+book.text));
+  document.getElementById("stopSpeak").onclick=()=>speechSynthesis.cancel();
+ }
+ reader.scrollIntoView({behavior:"smooth",block:"start"});
+}function historyPage(){
+ state.page="history";
+ const rows=state.history.length?state.history:state.courses.flatMap(c=>lessons(c).filter(l=>state.done[c.id+"_"+l.id]).map(l=>({course:c.title,lesson:l.title,completed_at:null})));
+ app.innerHTML='<section class="section"><div class="section-title"><div><h1>Histórico</h1><p class="muted">Acompanhe as aulas que você já concluiu.</p></div></div>'+(rows.length?'<div class="history-list">'+rows.map(x=>'<article class="history-item"><div><b>'+esc(x.course||"Curso")+'</b><p class="muted">'+esc(x.lesson||"Aula concluída")+'</p></div><span class="pill">Concluída</span></article>').join("")+'</div>':'<div class="empty">Seu histórico aparecerá aqui depois que você concluir as primeiras aulas.</div>')+'</section>';
+ bind();
 }
 function store(){
  state.page="store";
@@ -77,7 +109,8 @@ async function openCourse(id){
  try{state.course=await api("/api/courses/"+id)}catch(_){state.course=state.courses.find(c=>c.id===id)}
  if(!state.course)return alert("Curso indisponível no momento");
  state.lesson=lessons(state.course)[0];
- if(state.user&&state.token)try{await api("/api/my/enrollments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:id})})}catch(_){}
+ if(!state.enrollments.includes(id)){state.enrollments.push(id);localStorage.setItem("mp_enrollments",JSON.stringify(state.enrollments))}
+ if(state.user&&state.token&&!isLocalUser())try{await api("/api/my/enrollments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:id})})}catch(_){}
  course();
 }
 function lessonIndex(){return lessons(state.course).findIndex(x=>x.id===state.lesson.id)}
@@ -109,14 +142,37 @@ async function renderTab(kind="content"){
  }else if(kind==="quiz"){
   const q=quizFor(l),passed=!!state.quizPassed[state.course.id+"_"+l.id];
   b.innerHTML='<div class="activity-box"><span class="pill">ATIVIDADE DA AULA</span><h3>'+esc(q.question)+'</h3>'+q.options.map((x,i)=>'<label class="activity-option"><input type="radio" name="q" value="'+i+'"> '+esc(x)+'</label>').join("")+'<button class="btn" id="check">Corrigir atividade</button><p id="result" class="muted">'+(passed?"Atividade aprovada ✓":"")+"</p></div>";
-  document.getElementById("check").onclick=async()=>{const v=document.querySelector("input[name=q]:checked"),result=document.getElementById("result");if(!v){result.textContent="Selecione uma resposta.";return}if(+v.value!==q.answer){result.textContent="Resposta incorreta. Tente novamente.";return}state.quizPassed[state.course.id+"_"+l.id]=true;localStorage.setItem("mp_quiz_passed",JSON.stringify(state.quizPassed));if(state.token&&state.user?.id!=="demo")api("/api/lesson-state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:state.course.id,lessonId:l.id,quizPassed:true})}).catch(()=>{});result.textContent="Resposta correta ✓ Agora marque a aula como concluída.";renderPlayer();renderLessons()};
+  document.getElementById("check").onclick=async()=>{const v=document.querySelector("input[name=q]:checked"),result=document.getElementById("result");if(!v){result.textContent="Selecione uma resposta.";return}if(+v.value!==q.answer){result.textContent="Resposta incorreta. Tente novamente.";return}state.quizPassed[state.course.id+"_"+l.id]=true;localStorage.setItem("mp_quiz_passed",JSON.stringify(state.quizPassed));if(state.token&&!isLocalUser()&&state.user?.id!=="demo")api("/api/lesson-state",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:state.course.id,lessonId:l.id,quizPassed:true})}).catch(()=>{});result.textContent="Resposta correta ✓ Agora marque a aula como concluída.";renderPlayer();renderLessons()};
  }else b.innerHTML='<h3>'+esc(l.title)+'</h3><p>'+esc(l.description)+'</p><p class="muted">Assista à aula, faça a atividade e acerte a resposta. Depois marque a aula como concluída para liberar a próxima.</p>';
 }
 function login(){
  modal.classList.add("show");modal.innerHTML='<div class="modal-box"><h2>Área do aluno</h2><p class="muted">Entre ou crie sua conta.</p><div class="auth-tabs"><button class="btn" id="tabLogin">Entrar</button><button class="outline" id="tabRegister">Criar conta</button></div><div id="authBody"></div></div>';
  const body=document.getElementById("authBody");
- const renderLogin=()=>{body.innerHTML='<input class="field" id="email" placeholder="E-mail" value="aluno@multiplay.local"><input class="field" id="password" type="password" placeholder="Senha" value="123456"><button class="btn" id="doLogin" style="width:100%">Entrar</button><p class="muted small">Demonstração: aluno@multiplay.local / 123456</p><p id="authError" class="error"></p>';document.getElementById("doLogin").onclick=async()=>{try{let d;try{d=await api("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.value,password:password.value})})}catch(_){if(email.value==="aluno@multiplay.local"&&password.value==="123456")d={token:"demo-local",user:{id:"demo",name:"Aluno Multiplay",email:"aluno@multiplay.local",role:"student"}};else throw new Error("E-mail ou senha inválidos")}state.token=d.token;state.user=d.user;localStorage.setItem("mp_token",state.token);localStorage.setItem("mp_user",JSON.stringify(state.user));location.reload()}catch(e){document.getElementById("authError").textContent=e.message}}};
- const renderRegister=()=>{body.innerHTML='<input class="field" id="regName" placeholder="Nome completo"><input class="field" id="regEmail" placeholder="E-mail"><input class="field" id="regPassword" type="password" placeholder="Senha"><button class="btn" id="doRegister" style="width:100%">Criar conta</button><p id="authError" class="error"></p>';document.getElementById("doRegister").onclick=async()=>{try{const d=await api("/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:regName.value,email:regEmail.value,password:regPassword.value})});state.token=d.token;state.user=d.user;localStorage.setItem("mp_token",state.token);localStorage.setItem("mp_user",JSON.stringify(state.user));location.reload()}catch(e){document.getElementById("authError").textContent=e.message}}};
+ const saveSession=(d)=>{state.token=d.token;state.user=d.user;localStorage.setItem("mp_token",state.token);localStorage.setItem("mp_user",JSON.stringify(state.user));location.reload()};
+ const renderLogin=()=>{
+  body.innerHTML='<input class="field" id="email" placeholder="E-mail" autocomplete="email"><input class="field" id="password" type="password" placeholder="Senha" autocomplete="current-password"><button class="btn" id="doLogin" style="width:100%">Entrar</button><p class="muted small">Para testar: aluno@multiplay.local / 123456</p><p id="authError" class="error"></p>';
+  document.getElementById("doLogin").onclick=async()=>{
+   const ev=document.getElementById("email").value.trim().toLowerCase(),pw=document.getElementById("password").value;
+   try{
+    const d=await api("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:ev,password:pw})});saveSession(d);
+   }catch(e){
+    if(ev==="aluno@multiplay.local"&&pw==="123456")saveSession({token:"demo-local",user:{id:"demo",name:"Aluno Multiplay",email:ev,role:"student"}});
+    else{const raw=localStorage.getItem(localAccountKey(ev));if(raw){const acc=JSON.parse(raw);if(acc.password===pw)saveSession({token:"local-"+crypto.randomUUID(),user:{id:acc.id,name:acc.name,email:acc.email,role:"student",local:true}});else document.getElementById("authError").textContent="E-mail ou senha inválidos";}else document.getElementById("authError").textContent=e.message||"E-mail ou senha inválidos";}
+   }
+  };
+ };
+ const renderRegister=()=>{
+  body.innerHTML='<input class="field" id="regName" placeholder="Nome completo" autocomplete="name"><input class="field" id="regEmail" placeholder="E-mail" autocomplete="email"><input class="field" id="regPassword" type="password" placeholder="Senha" autocomplete="new-password"><button class="btn" id="doRegister" style="width:100%">Criar conta</button><p class="muted small">Se o servidor estiver indisponível, a conta de teste será salva neste aparelho.</p><p id="authError" class="error"></p>';
+  document.getElementById("doRegister").onclick=async()=>{
+   const name=document.getElementById("regName").value.trim(),emailValue=document.getElementById("regEmail").value.trim().toLowerCase(),password=document.getElementById("regPassword").value;
+   if(name.length<3||!emailValue.includes("@")||password.length<6){document.getElementById("authError").textContent="Informe nome, e-mail válido e senha com pelo menos 6 caracteres.";return}
+   try{
+    const d=await api("/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email:emailValue,password})});saveSession(d);
+   }catch(e){
+    const acc={id:"local-"+crypto.randomUUID(),name,email:emailValue,password};localStorage.setItem(localAccountKey(emailValue),JSON.stringify(acc));saveSession({token:"local-"+crypto.randomUUID(),user:{id:acc.id,name:acc.name,email:acc.email,role:"student",local:true}});
+   }
+  };
+ };
  document.getElementById("tabLogin").onclick=renderLogin;document.getElementById("tabRegister").onclick=renderRegister;renderLogin();
 }
 function profile(){
@@ -124,7 +180,7 @@ function profile(){
  document.getElementById("myProfile").onclick=()=>{modal.classList.remove("show");my()};document.getElementById("logout").onclick=()=>{localStorage.removeItem("mp_token");localStorage.removeItem("mp_user");location.reload()};
 }
 function bind(){
- document.querySelectorAll("[data-page]").forEach(x=>x.onclick=()=>{const p=x.dataset.page;if(p==="home")home();else if(p==="catalog")catalog();else if(p==="my")my();else if(p==="library")library();else if(p==="certs")certs();else if(p==="store")store()});
+ document.querySelectorAll("[data-page]").forEach(x=>x.onclick=()=>{const p=x.dataset.page;if(p==="home")home();else if(p==="catalog")catalog();else if(p==="my")my();else if(p==="library")library();else if(p==="history")historyPage();else if(p==="certs")certs();else if(p==="store")store()});
  document.querySelectorAll("[data-category]").forEach(x=>x.onclick=()=>catalog(x.dataset.category));
  document.querySelectorAll("[data-course]").forEach(x=>x.onclick=()=>openCourse(x.dataset.course));
  document.querySelectorAll("[data-lesson]").forEach(x=>x.onclick=()=>{const t=lessons(state.course).find(l=>l.id===x.dataset.lesson);if(!t)return;if(!unlocked(t)){alert("Aula bloqueada. Conclua a aula anterior e acerte a atividade antes de avançar.");return}state.lesson=t;course()});
@@ -135,7 +191,8 @@ function bind(){
  document.querySelectorAll("[data-book]").forEach(x=>x.onclick=()=>alert("Material: "+x.dataset.book+"\nA biblioteca digital está sendo ampliada nesta versão."));
  const prev=document.querySelector("[data-prev-lesson]");if(prev)prev.onclick=()=>{const a=lessons(state.course),i=lessonIndex();if(i>0){state.lesson=a[i-1];course()}};
  const next=document.querySelector("[data-next-lesson]");if(next)next.onclick=()=>{const a=lessons(state.course),i=lessonIndex(),k=key();if(!state.done[k]||!state.quizPassed[k])return alert("Conclua a aula e faça a atividade corretamente antes de avançar.");if(i<a.length-1){state.lesson=a[i+1];course()}};
- const c=document.getElementById("complete");if(c)c.onclick=async()=>{const k=key();if(!state.quizPassed[k])return alert("Você precisa fazer a atividade e acertar a resposta antes de concluir esta aula.");if(state.done[k])return;try{if(state.token&&state.user?.id!=="demo")await api("/api/progress",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:state.course.id,lessonId:state.lesson.id,quizPassed:true})});state.done[k]=true;localStorage.setItem("mp_done",JSON.stringify(state.done));course()}catch(e){alert(e.message)}};
+ const c=document.getElementById("complete");if(c)c.onclick=async()=>{const k=key();if(!state.quizPassed[k])return alert("Você precisa fazer a atividade e acertar a resposta antes de concluir esta aula.");if(state.done[k])return;try{if(state.token&&!isLocalUser()&&state.user?.id!=="demo")await api("/api/progress",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:state.course.id,lessonId:state.lesson.id,quizPassed:true})});state.done[k]=true;localStorage.setItem("mp_done",JSON.stringify(state.done));course()}catch(e){alert(e.message)}};
+ document.querySelectorAll("[data-history]").forEach(x=>x.onclick=historyPage);
  updateAccount();
 }
 init().catch(e=>{app.innerHTML='<section class="section"><div class="empty">Não foi possível carregar a plataforma.</div></section>'});
