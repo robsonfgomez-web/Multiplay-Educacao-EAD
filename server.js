@@ -1,21 +1,105 @@
 import express from "express";
 import path from "path";
+import crypto from "crypto";
 import {fileURLToPath} from "url";
+import pg from "pg";
+const {Pool}=pg;
 const __filename=fileURLToPath(import.meta.url),__dirname=path.dirname(__filename);
-const app=express(); const PORT=process.env.PORT||3000;
-app.use(express.json()); app.use(express.static(path.join(__dirname,"public")));
+const app=express(),PORT=process.env.PORT||3000;
+app.use(express.json({limit:"1mb"}));
+app.use((req,res,next)=>{res.set("Cache-Control","no-store");next()});
+app.use(express.static(path.join(__dirname,"public")));
+
 const courses=[
 {id:"ingles-a1",title:"Inglês Essencial A1",category:"Idiomas",hours:40,level:"Iniciante",cover:"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=85",description:"Curso introdutório de inglês para comunicação cotidiana, vocabulário, compreensão e pronúncia.",modules:[
-{id:"m1",title:"Fundamentos da comunicação",lessons:[{id:"l1",title:"Apresentação e objetivos",duration:"08:42",video:null,description:"Conheça a estrutura do curso e os objetivos de aprendizagem.",quiz:{question:"Qual é o objetivo desta aula?",options:["Conhecer a estrutura do curso","Fazer a prova final","Emitir o certificado"],answer:0}},{id:"l2",title:"Greetings: cumprimentos",duration:"12:10",video:null,description:"Vocabulário essencial para cumprimentos e apresentações."},{id:"l3",title:"Introductions: apresentações",duration:"11:35",video:null,description:"Como dizer nome, origem e informações básicas."},{id:"l4",title:"Basic vocabulary",duration:"14:20",video:null,description:"Palavras e expressões de uso frequente."}]},
-{id:"m2",title:"Construção de frases",lessons:[{id:"l5",title:"Verb to be",duration:"15:05",video:null,description:"Uso do verbo to be em frases afirmativas."},{id:"l6",title:"Pronomes pessoais",duration:"10:25",video:null,description:"I, you, he, she, it, we e they."},{id:"l7",title:"Perguntas e respostas",duration:"13:40",video:null,description:"Estruturas simples para conversação."}]},
-{id:"m3",title:"Situações práticas",lessons:[{id:"l8",title:"Daily routine",duration:"12:30",video:null,description:"Vocabulário de rotina e hábitos."},{id:"l9",title:"Numbers, dates and time",duration:"16:00",video:null,description:"Números, datas e horários."},{id:"l10",title:"At the store",duration:"13:15",video:null,description:"Frases úteis para compras e atendimento."}]},
-{id:"m4",title:"Revisão e avaliação",lessons:[{id:"l11",title:"Revisão geral",duration:"18:00",video:null,description:"Revisão dos principais conteúdos."},{id:"l12",title:"Avaliação final",duration:"20:00",video:null,description:"Avaliação de conclusão.",quiz:{question:"O que libera o certificado?",options:["Conclusão e aprovação","Abrir o curso","Assistir uma aula"],answer:0}}]}]},
-{id:"atendimento",title:"Atendimento ao Cliente",category:"Profissionalizantes",hours:30,level:"Básico",cover:"https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=85",description:"Comunicação profissional, relacionamento e técnicas de atendimento.",modules:[{id:"a1",title:"Fundamentos",lessons:[{id:"a1l1",title:"O papel do atendimento",duration:"09:10",video:null,description:"Princípios do atendimento profissional."},{id:"a1l2",title:"Comunicação clara",duration:"11:20",video:null,description:"Como ouvir, compreender e responder melhor."},{id:"a1l3",title:"Perfil do cliente",duration:"10:15",video:null,description:"Necessidades e expectativas."}]}]},
-{id:"informatica",title:"Informática Essencial",category:"Tecnologia",hours:35,level:"Iniciante",cover:"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=85",description:"Fundamentos para uso profissional de computador, internet, arquivos e segurança digital.",modules:[{id:"i1",title:"Fundamentos digitais",lessons:[{id:"i1l1",title:"Conhecendo o computador",duration:"10:00",video:null,description:"Conceitos essenciais."},{id:"i1l2",title:"Arquivos e pastas",duration:"12:00",video:null,description:"Organização de documentos."},{id:"i1l3",title:"Internet e segurança",duration:"14:00",video:null,description:"Navegação e boas práticas."}]}]}
+{id:"m1",title:"Fundamentos da comunicação",lessons:[
+{id:"l1",title:"Apresentação e objetivos",duration:"08:42",description:"Conheça a estrutura do curso e os objetivos de aprendizagem.",quiz:{question:"Qual é o objetivo desta aula?",options:["Conhecer a estrutura do curso","Fazer a prova final","Emitir o certificado"],answer:0}},
+{id:"l2",title:"Greetings: cumprimentos",duration:"12:10",description:"Vocabulário essencial para cumprimentos e apresentações."},
+{id:"l3",title:"Introductions: apresentações",duration:"11:35",description:"Como dizer nome, origem e informações básicas."},
+{id:"l4",title:"Basic vocabulary",duration:"14:20",description:"Palavras e expressões de uso frequente."}]},
+{id:"m2",title:"Construção de frases",lessons:[
+{id:"l5",title:"Verb to be",duration:"15:05",description:"Uso do verbo to be em frases afirmativas."},
+{id:"l6",title:"Pronomes pessoais",duration:"10:25",description:"I, you, he, she, it, we e they."},
+{id:"l7",title:"Perguntas e respostas",duration:"13:40",description:"Estruturas simples para conversação."}]},
+{id:"m3",title:"Situações práticas",lessons:[
+{id:"l8",title:"Daily routine",duration:"12:30",description:"Vocabulário de rotina e hábitos."},
+{id:"l9",title:"Numbers, dates and time",duration:"16:00",description:"Números, datas e horários."},
+{id:"l10",title:"At the store",duration:"13:15",description:"Frases úteis para compras e atendimento."}]},
+{id:"m4",title:"Revisão e avaliação",lessons:[
+{id:"l11",title:"Revisão geral",duration:"18:00",description:"Revisão dos principais conteúdos."},
+{id:"l12",title:"Avaliação final",duration:"20:00",description:"Avaliação de conclusão.",quiz:{question:"O que libera o certificado?",options:["Conclusão e aprovação","Abrir o curso","Assistir uma aula"],answer:0}}]}]},
+{id:"atendimento",title:"Atendimento ao Cliente",category:"Profissionalizantes",hours:30,level:"Básico",cover:"https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=85",description:"Comunicação profissional, relacionamento e técnicas de atendimento.",modules:[{id:"a1",title:"Fundamentos",lessons:[
+{id:"a1l1",title:"O papel do atendimento",duration:"09:10",description:"Princípios do atendimento profissional."},
+{id:"a1l2",title:"Comunicação clara",duration:"11:20",description:"Como ouvir, compreender e responder melhor."},
+{id:"a1l3",title:"Perfil do cliente",duration:"10:15",description:"Necessidades e expectativas."}]}]},
+{id:"informatica",title:"Informática Essencial",category:"Tecnologia",hours:35,level:"Iniciante",cover:"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=85",description:"Fundamentos para uso profissional de computador, internet, arquivos e segurança digital.",modules:[{id:"i1",title:"Fundamentos digitais",lessons:[
+{id:"i1l1",title:"Conhecendo o computador",duration:"10:00",description:"Conceitos essenciais."},
+{id:"i1l2",title:"Arquivos e pastas",duration:"12:00",description:"Organização de documentos."},
+{id:"i1l3",title:"Internet e segurança",duration:"14:00",description:"Navegação e boas práticas."}]}]}
 ];
-app.get("/api/health",(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.0.0"}));
-app.get("/api/courses",(_q,r)=>r.json(courses.map(c=>({...c,modules:c.modules.map(m=>({...m,lessons:m.lessons.map(({video,...l})=>l)}))}))));
-app.get("/api/courses/:id",(q,r)=>{const c=courses.find(x=>x.id===q.params.id); if(!c)return r.status(404).json({error:"Curso não encontrado"}); r.json(c)});
+
+const flat=c=>c.modules.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})));
+const publicCourse=c=>({...c,modules:c.modules.map(m=>({...m,lessons:m.lessons.map(l=>{const {video,...rest}=l;return rest})}))});
+const safeUser=u=>({id:u.id,name:u.name,email:u.email});
+const pool=process.env.DATABASE_URL?new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}}):null;
+let dbReady=false;
+async function db(){
+ if(!pool)return false;
+ try{
+  await pool.query(`CREATE TABLE IF NOT EXISTS students(id SERIAL PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW());
+  CREATE TABLE IF NOT EXISTS progress(student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,course_id TEXT NOT NULL,lesson_id TEXT NOT NULL,completed_at TIMESTAMPTZ DEFAULT NOW(),PRIMARY KEY(student_id,course_id,lesson_id));
+  CREATE TABLE IF NOT EXISTS notes(student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,lesson_id TEXT NOT NULL,note TEXT NOT NULL,updated_at TIMESTAMPTZ DEFAULT NOW(),PRIMARY KEY(student_id,lesson_id));`);
+  dbReady=true;return true;
+ }catch(e){console.error("DB:",e.message);return false}
+}
+const demo={id:"demo",name:"Aluno Multiplay",email:"aluno@multiplay.local"};
+const sessions=new Map();
+function session(req){const t=req.headers.authorization?.replace("Bearer ","");return t?sessions.get(t):null}
+function auth(req,res,next){const s=session(req);if(!s)return res.status(401).json({error:"Faça login para continuar"});req.user=s;next()}
+app.get("/api/health",async(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.1.0",database:!!pool&&dbReady}));
+app.get("/api/courses",(_q,r)=>r.json(courses.map(publicCourse)));
+app.get("/api/courses/:id",(q,r)=>{const c=courses.find(x=>x.id===q.params.id);if(!c)return r.status(404).json({error:"Curso não encontrado"});r.json(c)});
+app.post("/api/auth/login",async(q,r)=>{
+ const {email,password}=q.body||{};
+ if(!email||!password)return r.status(400).json({error:"Informe e-mail e senha"});
+ if(email==="aluno@multiplay.local"&&password==="123456"){const token=crypto.randomUUID();sessions.set(token,demo);return r.json({token,user:demo,mode:"demo"})}
+ if(!pool)return r.status(401).json({error:"Acesso de demonstração: aluno@multiplay.local / 123456"});
+ const result=await pool.query("SELECT * FROM students WHERE lower(email)=lower($1)",[email]);
+ const u=result.rows[0];if(!u||u.password!==password)return r.status(401).json({error:"E-mail ou senha inválidos"});
+ const token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u),mode:"database"});
+});
+app.post("/api/auth/register",async(q,r)=>{
+ const {name,email,password}=q.body||{};if(!name||!email||!password)return r.status(400).json({error:"Preencha nome, e-mail e senha"});
+ if(!pool)return r.status(503).json({error:"Cadastro será ativado quando o banco do ambiente estiver conectado."});
+ await db();try{const x=await pool.query("INSERT INTO students(name,email,password) VALUES($1,$2,$3) RETURNING id,name,email",[name,email,password]);const u=x.rows[0],token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u)})}catch(e){r.status(409).json({error:"Este e-mail já está cadastrado."})}
+});
+app.get("/api/me",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.json(req.user);
+ const x=await pool.query("SELECT id,name,email FROM students WHERE id=$1",[req.user.id]);r.json(x.rows[0]);
+});
+app.get("/api/progress",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.json([]);
+ const x=await pool.query("SELECT course_id,lesson_id,completed_at FROM progress WHERE student_id=$1",[req.user.id]);r.json(x.rows);
+});
+app.post("/api/progress",auth,async(req,r)=>{
+ const {courseId,lessonId}=req.body||{};const c=courses.find(x=>x.id===courseId),l=c&&flat(c).find(x=>x.id===lessonId);if(!c||!l)return r.status(404).json({error:"Aula não encontrada"});
+ if(req.user.id!=="demo")await pool.query("INSERT INTO progress(student_id,course_id,lesson_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[req.user.id,courseId,lessonId]);
+ r.json({ok:true,courseId,lessonId});
+});
+app.get("/api/notes/:lessonId",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.json({note:""});
+ const x=await pool.query("SELECT note FROM notes WHERE student_id=$1 AND lesson_id=$2",[req.user.id,req.params.lessonId]);r.json({note:x.rows[0]?.note||""});
+});
+app.post("/api/notes/:lessonId",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.json({ok:true});
+ await pool.query("INSERT INTO notes(student_id,lesson_id,note) VALUES($1,$2,$3) ON CONFLICT(student_id,lesson_id) DO UPDATE SET note=EXCLUDED.note,updated_at=NOW()",[req.user.id,req.params.lessonId,String(req.body?.note||"")]);r.json({ok:true});
+});
+app.get("/api/certificates",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.json([]);
+ const x=await pool.query("SELECT course_id,MAX(completed_at) AS completed_at FROM progress WHERE student_id=$1 GROUP BY course_id",[req.user.id]);
+ const certs=x.rows.filter(row=>{const c=courses.find(z=>z.id===row.course_id);return c&&flat(c).length&&flat(c).every(l=>x.rows.some(y=>y.course_id===c.id&&y.lesson_id===l.id))}).map(row=>({courseId:row.course_id,course:courses.find(c=>c.id===row.course_id).title,date:row.completed_at}));r.json(certs);
+});
+await db();
 app.get("/admin",(q,r)=>r.sendFile(path.join(__dirname,"public","admin.html")));
 app.get("/{*splat}",(q,r)=>r.sendFile(path.join(__dirname,"public","index.html")));
 app.listen(PORT,()=>console.log("Multiplay Educação EAD na porta "+PORT));
