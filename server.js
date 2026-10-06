@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname,"public")));
 const courses=[
 {id:"ingles-a1",title:"Curso de Inglês Básico",category:"Idiomas",hours:40,level:"Básico",cover:"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=85",description:"Curso introdutório de inglês para comunicação cotidiana, vocabulário, compreensão e pronúncia.",modules:[
 {id:"m1",title:"Fundamentos da comunicação",lessons:[
-{id:"l1",title:"Apresentação e objetivos",duration:"08:42",description:"Conheça a estrutura do curso e os objetivos de aprendizagem.",quiz:{question:"Qual é o objetivo desta aula?",options:["Conhecer a estrutura do curso","Fazer a prova final","Emitir o certificado"],answer:0}},
+{id:"l1",title:"Aula 1 — Inglês para iniciantes",duration:"10:00",description:"Aula com professor: apresentação, vocabulário e primeiros passos no inglês.",videoId:"S45kHeWnT0M",quiz:{question:"Qual é o objetivo desta aula?",options:["Conhecer a estrutura do curso","Fazer a prova final","Emitir o certificado"],answer:0}},
 {id:"l2",title:"Greetings: cumprimentos",duration:"12:10",description:"Vocabulário essencial para cumprimentos e apresentações."},
 {id:"l3",title:"Introductions: apresentações",duration:"11:35",description:"Como dizer nome, origem e informações básicas."},
 {id:"l4",title:"Basic vocabulary",duration:"14:20",description:"Palavras e expressões de uso frequente."}]},
