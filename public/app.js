@@ -37,18 +37,29 @@ async function init(){
  }
  updateAccount();
 }
-function updateAccount(){const b=document.getElementById("loginBtn");if(b){b.textContent=state.user?state.user.name.split(" ")[0]:"Entrar";b.onclick=state.user?profile:login}}
+function updateAccount(){
+ const b=document.getElementById("profileNav"),label=document.getElementById("profileNavLabel");
+ if(b){b.onclick=state.user?profile:login;b.classList.toggle("is-user",!!state.user)}
+ if(label)label.textContent=state.user?"Perfil":"Entrar";
+ document.querySelectorAll(".bottom-item[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===state.page));
+}
 function card(c){
  const p=pct(c),n=lessons(c).length;
  return '<article class="card"><img class="cover" src="'+esc(c.cover)+'" alt=""><div class="card-body"><span class="pill">'+esc(c.category)+'</span><h3>'+esc(c.title)+'</h3><p class="muted">'+esc(c.description)+'</p><div class="meta"><span>'+c.hours+'h</span><span>'+n+' aulas</span><span>'+esc(c.level)+'</span></div><div class="progress" style="margin-top:12px"><i style="width:'+p+'%"></i></div><small class="muted">'+p+'% concluído</small><div style="margin-top:14px"><button class="btn" data-course="'+esc(c.id)+'">'+(p?"Continuar":"Abrir curso")+'</button></div></div></article>'
 }
 function home(){
  state.page="home";
- const cats=[...new Set(state.courses.map(c=>c.category))];
- app.innerHTML='<section class="hero"><div class="hero-copy"><span class="eyebrow">MULTIPLAY EDUCAÇÃO · EAD</span><h1>Aprenda no seu ritmo. Evolua na sua carreira.</h1><p>Cursos online, aulas por módulos, atividades, progresso, certificados e biblioteca em uma única plataforma.</p><div class="hero-actions"><button class="btn" data-page="catalog">Explorar cursos</button><button class="outline" data-page="my">Meus estudos</button></div></div></section><section class="section"><div class="section-title"><div><h2>Cursos em destaque</h2><p class="muted">Idiomas, tecnologia, negócios, marketing e formação profissional.</p></div><button class="outline" data-page="catalog">Ver catálogo completo →</button></div><div class="grid">'+state.courses.slice(0,6).map(card).join("")+'</div><div class="category-strip">'+cats.map(x=>'<button class="category-chip" data-category="'+esc(x)+'">'+esc(x)+'</button>').join("")+'</div></section>';
+ const userName=state.user?.name?.split(" ")[0]||"Aluno";
+ const languageCourses=state.courses.filter(c=>c.category==="Idiomas");
+ const languageCards=languageCourses.slice(0,6).map(c=>'<article class="portal-course portal-language" data-course="'+esc(c.id)+'"><img src="'+esc(c.cover)+'" alt=""><div class="portal-course-name">'+esc(c.title.replace(/^Curso de /i,""))+'</div><span>Básico ao Avançado</span></article>').join("");
+ const usedCats=[];
+ state.courses.forEach(c=>{if(c.category!=="Idiomas"&&!usedCats.includes(c.category))usedCats.push(c.category)});
+ const categoryCards=usedCats.slice(0,6).map(cat=>{const c=state.courses.find(x=>x.category===cat);return '<article class="portal-course category-course" data-course="'+esc(c.id)+'"><img src="'+esc(c.cover)+'" alt=""><div class="portal-course-name">'+esc(cat)+'</div><span>'+esc(c.level||"Básico")+'</span></article>'}).join("");
+ const inProgress=state.courses.filter(c=>pct(c)>0).length;
+ const completed=state.courses.filter(c=>pct(c)===100).length;
+ app.innerHTML='<div class="portal"><section class="portal-top"><div class="portal-brand"><span class="portal-mark">▶</span><div><b>MULTIPLAY</b><span>EDUCAÇÃO</span></div><em>Portal do Estudante</em></div><div class="portal-user"><div class="avatar">'+(userName[0]||"A").toUpperCase()+'</div><div><strong>Olá, '+esc(userName)+'</strong><small>'+(state.user?"Aluno":"Visitante")+'</small></div><span>⌄</span></div></section><section class="portal-hero"><div class="portal-hero-copy"><small>PORTAL DO ESTUDANTE</small><h1>Olá, '+esc(userName)+' 👋</h1><p>Continue sua jornada na Multiplay Educação</p><div class="portal-actions"><button class="btn" data-page="my">▷ CONTINUAR ESTUDANDO</button><button class="portal-dark-btn" data-profile-nav>♙ MEU PERFIL</button></div></div><div class="portal-hero-art"><div class="art-circle"></div><div class="art-laptop">▰</div><div class="art-badge">MULTIPLAY</div></div></section><section class="portal-section"><h2>🚀 Acesso rápido</h2><div class="quick-grid"><button data-page="my"><span>▤</span><b>Meus cursos</b><small>${inProgress} curso${inProgress===1?"":"s"} em progresso</small></button><button data-category="Idiomas"><span>◎</span><b>Idiomas</b><small>${languageCourses.length} curso${languageCourses.length===1?"":"s"} disponíveis</small></button><button data-page="certs"><span>♜</span><b>Certificados</b><small>${completed} certificado${completed===1?"":"s"} emitido${completed===1?"":"s"}</small></button><button data-page="catalog"><span>⌕</span><b>Pesquisar</b><small>Explorar catálogo</small></button></div></section><section class="portal-section"><div class="portal-section-title"><h2>◎ Idiomas <b>GRATUITO</b></h2><button class="portal-see-more" data-category="Idiomas">Ver todos →</button></div><div class="portal-course-row">'+(languageCards||'<div class="empty">Os cursos de idiomas aparecerão aqui.</div>')+'</div></section><section class="portal-section"><div class="portal-section-title"><h2>Outras categorias <span>▦</span></h2><button class="portal-see-more" data-page="catalog">Ver catálogo →</button></div><div class="portal-course-row">'+(categoryCards||'<div class="empty">Catálogo em expansão.</div>')+'</div></section></div>';
  bind();
-}
-function catalog(category=""){
+}function catalog(category=""){
  state.page="catalog";
  app.innerHTML='<section class="section"><div class="section-title"><div><button class="outline catalog-back" data-page="home">← Início</button><h1>Catálogo de cursos</h1><p class="muted">Pesquise por curso, área ou nível.</p></div><button class="outline filter-reset" id="resetFilters">Limpar filtros</button></div><div class="catalog-tools"><input class="field" id="q" placeholder="Buscar curso..." value=""><select class="field" id="cat"><option value="">Todas as áreas</option>'+[...new Set(state.courses.map(c=>c.category))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select><select class="field" id="level"><option value="">Todos os níveis</option><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select></div><div class="catalog-summary" id="catalogSummary"></div><div class="grid" id="grid"></div></section>';
  const q=document.getElementById("q"),cat=document.getElementById("cat"),level=document.getElementById("level");cat.value=category;
@@ -197,6 +208,7 @@ function profile(){
 }
 function bind(){
  document.querySelectorAll("[data-page]").forEach(x=>x.onclick=()=>{const p=x.dataset.page;if(p==="home")home();else if(p==="catalog")catalog();else if(p==="my")my();else if(p==="library")library();else if(p==="history")historyPage();else if(p==="certs")certs();else if(p==="store")store()});
+ document.querySelectorAll("[data-profile-nav]").forEach(x=>x.onclick=()=>{state.user?profile():login()});
  document.querySelectorAll("[data-category]").forEach(x=>x.onclick=()=>catalog(x.dataset.category));
  document.querySelectorAll("[data-course]").forEach(x=>x.onclick=()=>openCourse(x.dataset.course));
  document.querySelectorAll("[data-lesson]").forEach(x=>x.onclick=()=>{const t=lessons(state.course).find(l=>l.id===x.dataset.lesson);if(!t)return;if(!unlocked(t)){alert("Aula bloqueada. Conclua a aula anterior e acerte a atividade antes de avançar.");return}state.lesson=t;course()});
