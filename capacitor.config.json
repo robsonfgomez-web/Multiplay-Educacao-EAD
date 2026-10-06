@@ -2,5 +2,8 @@
   "appId":"br.com.multiplay.educacao",
   "appName":"Multiplay Educação",
   "webDir":"public",
-  "server":{"androidScheme":"https"}
+  "server":{
+    "url":"https://multiplay-educacao-ead.onrender.com",
+    "androidScheme":"https"
+  }
 }
