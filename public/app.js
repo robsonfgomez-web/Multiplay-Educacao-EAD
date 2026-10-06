@@ -102,7 +102,7 @@ function certs(){
 }
 async function certificate(c){
  const name=state.user?.name||"Aluno Multiplay";
- if(state.token&&state.user?.id!=="demo")try{await api("/api/certificates/issue",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:c.id})})}catch(e){return alert(e.message)}
+ if(state.token&&!isLocalUser()&&state.user?.id!=="demo")try{await api("/api/certificates/issue",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:c.id})})}catch(e){return alert(e.message)}
  app.innerHTML='<section class="section"><div class="cert"><div class="cert-inner"><p>MULTIPLAY EDUCAÇÃO</p><h1>Certificado de Conclusão</h1><p>Certificamos que</p><h2>'+esc(name)+'</h2><p>concluiu o curso</p><h2>'+esc(c.title)+'</h2><p>Carga horária: '+c.hours+' horas</p><p>'+new Date().toLocaleDateString("pt-BR")+'</p><button class="btn" onclick="window.print()">Imprimir / salvar PDF</button></div></div></section>';
 }
 async function openCourse(id){
@@ -136,9 +136,9 @@ async function renderTab(kind="content"){
  const l=state.lesson,b=document.getElementById("tabbody");
  if(kind==="notes"){
   let note=state.notes[l.id]||"";
-  if(state.token)try{note=(await api("/api/notes/"+encodeURIComponent(l.id))).note||"";state.notes[l.id]=note}catch(_){}
+  if(state.token&&!isLocalUser())try{note=(await api("/api/notes/"+encodeURIComponent(l.id))).note||"";state.notes[l.id]=note}catch(_){}
   b.innerHTML='<textarea class="field" id="notes" style="min-height:160px" placeholder="Escreva suas anotações...">'+esc(note)+'</textarea><button class="btn" id="saveNote">Salvar anotação</button>';
-  document.getElementById("saveNote").onclick=async()=>{const v=document.getElementById("notes").value;state.notes[l.id]=v;localStorage.setItem("note_"+l.id,v);if(state.token)try{await api("/api/notes/"+encodeURIComponent(l.id),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({note:v})})}catch(_){}document.getElementById("saveNote").textContent="Salvo ✓"};
+  document.getElementById("saveNote").onclick=async()=>{const v=document.getElementById("notes").value;state.notes[l.id]=v;localStorage.setItem("note_"+l.id,v);if(state.token&&!isLocalUser())try{await api("/api/notes/"+encodeURIComponent(l.id),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({note:v})})}catch(_){}document.getElementById("saveNote").textContent="Salvo ✓"};
  }else if(kind==="quiz"){
   const q=quizFor(l),passed=!!state.quizPassed[state.course.id+"_"+l.id];
   b.innerHTML='<div class="activity-box"><span class="pill">ATIVIDADE DA AULA</span><h3>'+esc(q.question)+'</h3>'+q.options.map((x,i)=>'<label class="activity-option"><input type="radio" name="q" value="'+i+'"> '+esc(x)+'</label>').join("")+'<button class="btn" id="check">Corrigir atividade</button><p id="result" class="muted">'+(passed?"Atividade aprovada ✓":"")+"</p></div>";
