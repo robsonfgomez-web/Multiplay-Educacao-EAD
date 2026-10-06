@@ -106,12 +106,22 @@ async function certificate(c){
  app.innerHTML='<section class="section"><div class="cert"><div class="cert-inner"><p>MULTIPLAY EDUCAÇÃO</p><h1>Certificado de Conclusão</h1><p>Certificamos que</p><h2>'+esc(name)+'</h2><p>concluiu o curso</p><h2>'+esc(c.title)+'</h2><p>Carga horária: '+c.hours+' horas</p><p>'+new Date().toLocaleDateString("pt-BR")+'</p><button class="btn" onclick="window.print()">Imprimir / salvar PDF</button></div></div></section>';
 }
 async function openCourse(id){
- try{state.course=await api("/api/courses/"+id)}catch(_){state.course=state.courses.find(c=>c.id===id)}
- if(!state.course)return alert("Curso indisponível no momento");
- state.lesson=lessons(state.course)[0];
+ const localCourse=state.courses.find(c=>c.id===id);
+ if(!localCourse)return alert("Curso indisponível no momento");
+ state.course=localCourse;
+ state.lesson=lessons(localCourse)[0];
  if(!state.enrollments.includes(id)){state.enrollments.push(id);localStorage.setItem("mp_enrollments",JSON.stringify(state.enrollments))}
- if(state.user&&state.token&&!isLocalUser())try{await api("/api/my/enrollments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:id})})}catch(_){}
  course();
+ try{
+  const remote=await api("/api/courses/"+encodeURIComponent(id));
+  if(remote&&remote.id&&Array.isArray(remote.modules)&&remote.modules.length){
+   state.course=remote;
+   const currentId=state.lesson?.id;
+   state.lesson=lessons(remote).find(x=>x.id===currentId)||lessons(remote)[0];
+   course();
+  }
+ }catch(_){}
+ if(state.user&&state.token&&!isLocalUser())api("/api/my/enrollments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:id})}).catch(()=>{});
 }
 function lessonIndex(){return lessons(state.course).findIndex(x=>x.id===state.lesson.id)}
 function quizFor(l){return l.quiz||{question:"Qual foi o principal objetivo desta aula?",options:["Aprender e praticar o conteúdo apresentado","Pular o conteúdo","Emitir o certificado sem estudar"],answer:0}}
