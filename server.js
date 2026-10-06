@@ -258,7 +258,19 @@ app.post("/api/certificates/issue",auth,async(req,r)=>{
  const y=await pool.query("INSERT INTO certificates(student_id,course_id,code) VALUES($1,$2,$3) RETURNING id,course_id,issued_at,code",[req.user.id,courseId,code]);
  r.json(y.rows[0]);
 });
+async function ensureAdmin(){
+ if(!pool)return;
+ const email=(process.env.ADMIN_EMAIL||"admin@multiplay.local").trim().toLowerCase();
+ const password=process.env.ADMIN_PASSWORD||"Multiplay@2026";
+ const existing=await pool.query("SELECT id FROM students WHERE lower(email)=lower($1)",[email]);
+ if(!existing.rows[0]){
+  await pool.query("INSERT INTO students(name,email,password_hash,role,active) VALUES($1,$2,$3,'admin',true)",["Administrador Multiplay",email,hashPassword(password)]);
+ }else{
+  await pool.query("UPDATE students SET role='admin',active=true WHERE id=$1",[existing.rows[0].id]);
+ }
+}
 await db();
+await ensureAdmin();
 app.get("/admin",(q,r)=>r.sendFile(path.join(__dirname,"public","admin.html")));
 app.get("/{*splat}",(q,r)=>r.sendFile(path.join(__dirname,"public","index.html")));
 app.listen(PORT,()=>console.log("Multiplay Educação EAD na porta "+PORT));
