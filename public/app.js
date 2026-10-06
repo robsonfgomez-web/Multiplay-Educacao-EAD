@@ -27,17 +27,31 @@ async function api(url,opt={}){
  return d;
 }
 async function init(){
- const authBuild="1.4.0";
+ const authBuild="1.4.1";
  if(localStorage.getItem("mp_auth_gate_version")!==authBuild){
   localStorage.removeItem("mp_token");
   localStorage.removeItem("mp_user");
   localStorage.setItem("mp_auth_gate_version",authBuild);
   state.user=null;state.token="";
  }
- try{const r=await fetch("/courses.json",{cache:"no-store"});state.courses=await r.json()}catch(_){app.innerHTML='<section class="section"><div class="empty">Carregando a plataforma...</div></section>';return}
- if(!state.user){login();return}
- home()}
- try{const c=new AbortController(),t=setTimeout(()=>c.abort(),6000),r=await fetch(API_BASE+"/api/courses",{signal:c.signal,cache:"no-store"});clearTimeout(t);if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length){state.courses=d;if(state.user)home()}}}catch(_){}
+ try{
+  const r=await fetch("/courses.json",{cache:"no-store"});
+  state.courses=await r.json();
+ }catch(_){
+  app.innerHTML='<section class="section"><div class="empty">Carregando a plataforma...</div></section>';
+  return;
+ }
+ if(!state.user){updateAccount();login();return;}
+ home();
+ try{
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),6000);
+  const r=await fetch(API_BASE+"/api/courses",{signal:c.signal,cache:"no-store"});
+  clearTimeout(t);
+  if(r.ok){
+   const d=await r.json();
+   if(Array.isArray(d)&&d.length){state.courses=d;home();}
+  }
+ }catch(_){}
  if(state.token&&!isLocalUser()){
   try{const p=await api("/api/progress");p.forEach(x=>state.done[x.course_id+"_"+x.lesson_id]=true);localStorage.setItem("mp_done",JSON.stringify(state.done))}catch(_){}
   try{const q=await api("/api/lesson-state");q.forEach(x=>state.quizPassed[x.course_id+"_"+x.lesson_id]=!!x.quiz_passed);localStorage.setItem("mp_quiz_passed",JSON.stringify(state.quizPassed))}catch(_){}
