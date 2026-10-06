@@ -83,7 +83,7 @@ async function db(){
     completed_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY(student_id,course_id,lesson_id)
    );
-   CREATE TABLE IF NOT EXISTS notes(
+   CREATE TABLE IF NOT EXISTS lesson_state(\n    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,\n    course_id TEXT NOT NULL,\n    lesson_id TEXT NOT NULL,\n    quiz_passed BOOLEAN NOT NULL DEFAULT false,\n    completed BOOLEAN NOT NULL DEFAULT false,\n    updated_at TIMESTAMPTZ DEFAULT NOW(),\n    PRIMARY KEY(student_id,course_id,lesson_id)\n   );\n   CREATE TABLE IF NOT EXISTS notes(
     student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
     lesson_id TEXT NOT NULL,
     note TEXT NOT NULL,
@@ -149,12 +149,7 @@ app.get("/api/progress",auth,async(req,r)=>{
  if(req.user.id==="demo")return r.json([]);
  const x=await pool.query("SELECT course_id,lesson_id,completed_at FROM progress WHERE student_id=$1",[req.user.id]);r.json(x.rows);
 });
-app.post("/api/progress",auth,async(req,r)=>{
- const {courseId,lessonId}=req.body||{};const c=courses.find(x=>x.id===courseId),l=c&&flat(c).find(x=>x.id===lessonId);if(!c||!l)return r.status(404).json({error:"Aula não encontrada"});
- if(req.user.id!=="demo")await pool.query("INSERT INTO progress(student_id,course_id,lesson_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[req.user.id,courseId,lessonId]);
- r.json({ok:true,courseId,lessonId});
-});
-app.get("/api/notes/:lessonId",auth,async(req,r)=>{
+app.post("/api/progress",auth,async(req,r)=>{\n const {courseId,lessonId,quizPassed}=req.body||{};const c=courses.find(x=>x.id===courseId),l=c&&flat(c).find(x=>x.id===lessonId);if(!c||!l)return r.status(404).json({error:"Aula não encontrada"});\n if(!quizPassed)return r.status(400).json({error:"A atividade precisa ser aprovada antes de concluir a aula."});\n if(req.user.id!=="demo"){\n  const q=await pool.query("SELECT quiz_passed FROM lesson_state WHERE student_id=$1 AND course_id=$2 AND lesson_id=$3",[req.user.id,courseId,lessonId]);\n  if(!q.rows[0]?.quiz_passed)return r.status(400).json({error:"A atividade desta aula ainda não foi aprovada."});\n  await pool.query("INSERT INTO progress(student_id,course_id,lesson_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[req.user.id,courseId,lessonId]);\n  await pool.query("UPDATE lesson_state SET completed=true,updated_at=NOW() WHERE student_id=$1 AND course_id=$2 AND lesson_id=$3",[req.user.id,courseId,lessonId]);\n }\n r.json({ok:true,courseId,lessonId,completed:true});\n});\napp.get("/api/lesson-state",auth,async(req,r)=>{\n if(req.user.id==="demo")return r.json([]);\n const x=await pool.query("SELECT course_id,lesson_id,quiz_passed,completed,updated_at FROM lesson_state WHERE student_id=$1",[req.user.id]);r.json(x.rows);\n});\napp.post("/api/lesson-state",auth,async(req,r)=>{\n const {courseId,lessonId,quizPassed}=req.body||{};const c=courses.find(x=>x.id===courseId),l=c&&flat(c).find(x=>x.id===lessonId);if(!c||!l)return r.status(404).json({error:"Aula não encontrada"});\n if(req.user.id==="demo")return r.json({ok:true});\n await pool.query("INSERT INTO lesson_state(student_id,course_id,lesson_id,quiz_passed,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(student_id,course_id,lesson_id) DO UPDATE SET quiz_passed=EXCLUDED.quiz_passed,updated_at=NOW()",[req.user.id,courseId,lessonId,!!quizPassed]);\n r.json({ok:true});\n});\napp.get("/api/notes/:lessonId",auth,async(req,r)=>{
  if(req.user.id==="demo")return r.json({note:""});
  const x=await pool.query("SELECT note FROM notes WHERE student_id=$1 AND lesson_id=$2",[req.user.id,req.params.lessonId]);r.json({note:x.rows[0]?.note||""});
 });
