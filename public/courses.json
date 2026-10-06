@@ -193,5 +193,195 @@
         ]
       }
     ]
+  },
+  {
+    "id": "excel-basico",
+    "title": "Excel Básico para o Trabalho",
+    "category": "Tecnologia",
+    "hours": 12,
+    "level": "Iniciante",
+    "cover": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1400&q=85",
+    "description": "Fundamentos de planilhas, fórmulas, gráficos e organização de dados.",
+    "modules": [
+      {
+        "id": "e1",
+        "title": "Primeiros passos",
+        "lessons": [
+          {
+            "id": "e1l1",
+            "title": "Conhecendo o Excel",
+            "duration": "Aula em vídeo",
+            "description": "Interface, linhas, colunas e primeiros dados.",
+            "videoId": "XCaLiP2sKTM"
+          },
+          {
+            "id": "e1l2",
+            "title": "Fórmulas e funções",
+            "duration": "Aula prática",
+            "description": "Primeiros cálculos e funções essenciais.",
+            "videoId": "XCaLiP2sKTM"
+          },
+          {
+            "id": "e1l3",
+            "title": "Gráficos e organização",
+            "duration": "Aula prática",
+            "description": "Criação de gráficos simples e organização da planilha.",
+            "videoId": "XCaLiP2sKTM"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marketing-digital",
+    "title": "Marketing Digital para Iniciantes",
+    "category": "Marketing",
+    "hours": 10,
+    "level": "Iniciante",
+    "cover": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1400&q=85",
+    "description": "Fundamentos de presença digital, público, tráfego e conversão.",
+    "modules": [
+      {
+        "id": "md1",
+        "title": "Fundamentos",
+        "lessons": [
+          {
+            "id": "md1l1",
+            "title": "O que é Marketing Digital",
+            "duration": "Aula em vídeo",
+            "description": "Conceitos e oportunidades no ambiente digital.",
+            "videoId": "_Ng6mYya3D8"
+          },
+          {
+            "id": "md1l2",
+            "title": "Público e nicho",
+            "duration": "Aula prática",
+            "description": "Como identificar público e nicho.",
+            "videoId": "_Ng6mYya3D8"
+          },
+          {
+            "id": "md1l3",
+            "title": "Tráfego e conversão",
+            "duration": "Aula prática",
+            "description": "Visão geral de tráfego pago, orgânico e conversão.",
+            "videoId": "_Ng6mYya3D8"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "empreendedorismo",
+    "title": "Empreendedorismo",
+    "category": "Negócios",
+    "hours": 10,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1400&q=85",
+    "description": "Mentalidade empreendedora, oportunidades, planejamento e execução.",
+    "modules": [
+      {
+        "id": "em1",
+        "title": "Fundamentos",
+        "lessons": [
+          {
+            "id": "em1l1",
+            "title": "Introdução ao empreendedorismo",
+            "duration": "Aula em vídeo",
+            "description": "Conceitos fundamentais e perfil empreendedor.",
+            "videoId": "swe0zFQKrO4"
+          },
+          {
+            "id": "em1l2",
+            "title": "Oportunidades",
+            "duration": "Aula prática",
+            "description": "Identificação de problemas e oportunidades.",
+            "videoId": "swe0zFQKrO4"
+          },
+          {
+            "id": "em1l3",
+            "title": "Planejamento",
+            "duration": "Aula prática",
+            "description": "Primeiros passos para transformar uma ideia em projeto.",
+            "videoId": "swe0zFQKrO4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "powerpoint-basico",
+    "title": "PowerPoint Básico",
+    "category": "Tecnologia",
+    "hours": 8,
+    "level": "Iniciante",
+    "cover": "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1400&q=85",
+    "description": "Crie apresentações profissionais com textos, imagens e organização visual.",
+    "modules": [
+      {
+        "id": "pp1",
+        "title": "Apresentações",
+        "lessons": [
+          {
+            "id": "pp1l1",
+            "title": "Conhecendo o PowerPoint",
+            "duration": "Aula em vídeo",
+            "description": "Introdução à área de trabalho e aos principais recursos.",
+            "videoId": "l_oYQPyjfy0"
+          },
+          {
+            "id": "pp1l2",
+            "title": "Slides e elementos",
+            "duration": "Aula prática",
+            "description": "Organização de slides e elementos.",
+            "videoId": "l_oYQPyjfy0"
+          },
+          {
+            "id": "pp1l3",
+            "title": "Apresentação final",
+            "duration": "Aula prática",
+            "description": "Preparação e finalização de uma apresentação.",
+            "videoId": "l_oYQPyjfy0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "atendimento-video",
+    "title": "Atendimento ao Cliente — Curso em Vídeo",
+    "category": "Profissionalizantes",
+    "hours": 10,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=85",
+    "description": "Curso introdutório de atendimento com aulas em vídeo e atividades.",
+    "modules": [
+      {
+        "id": "acv1",
+        "title": "Atendimento profissional",
+        "lessons": [
+          {
+            "id": "acv1l1",
+            "title": "Introdução ao atendimento",
+            "duration": "Aula em vídeo",
+            "description": "Princípios do bom atendimento.",
+            "videoId": "rMq3JjGfsfQ"
+          },
+          {
+            "id": "acv1l2",
+            "title": "Comunicação com o cliente",
+            "duration": "Aula prática",
+            "description": "Comunicação clara e postura profissional.",
+            "videoId": "rMq3JjGfsfQ"
+          },
+          {
+            "id": "acv1l3",
+            "title": "Situações de atendimento",
+            "duration": "Aula prática",
+            "description": "Como conduzir situações comuns de atendimento.",
+            "videoId": "rMq3JjGfsfQ"
+          }
+        ]
+      }
+    ]
   }
 ]
