@@ -1,0 +1,6 @@
+{
+  "appId":"br.com.multiplay.educacao",
+  "appName":"Multiplay Educação",
+  "webDir":"public",
+  "server":{"androidScheme":"https"}
+}
