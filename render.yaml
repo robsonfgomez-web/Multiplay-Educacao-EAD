@@ -9,4 +9,6 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: multiplay-db
+          property: connectionString
