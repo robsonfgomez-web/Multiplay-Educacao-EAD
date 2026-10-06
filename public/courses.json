@@ -14,9 +14,9 @@
         "lessons": [
           {
             "id": "l1",
-            "title": "Apresentação e objetivos",
-            "duration": "08:42",
-            "description": "Conheça a estrutura do curso e os objetivos de aprendizagem.",
+            "title": "Aula 1 — Inglês para iniciantes",
+            "duration": "10:00",
+            "description": "Aula com professor: apresentação, vocabulário e primeiros passos no inglês.",
             "quiz": {
               "question": "Qual é o objetivo desta aula?",
               "options": [
@@ -25,7 +25,8 @@
                 "Emitir o certificado"
               ],
               "answer": 0
-            }
+            },
+            "videoId": "S45kHeWnT0M"
           },
           {
             "id": "l2",
