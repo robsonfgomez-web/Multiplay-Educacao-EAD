@@ -46,9 +46,49 @@ let dbReady=false;
 async function db(){
  if(!pool)return false;
  try{
-  await pool.query(`CREATE TABLE IF NOT EXISTS students(id SERIAL PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW());
-  CREATE TABLE IF NOT EXISTS progress(student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,course_id TEXT NOT NULL,lesson_id TEXT NOT NULL,completed_at TIMESTAMPTZ DEFAULT NOW(),PRIMARY KEY(student_id,course_id,lesson_id));
-  CREATE TABLE IF NOT EXISTS notes(student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,lesson_id TEXT NOT NULL,note TEXT NOT NULL,updated_at TIMESTAMPTZ DEFAULT NOW(),PRIMARY KEY(student_id,lesson_id));`);
+  await pool.query(`
+   CREATE TABLE IF NOT EXISTS students(
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
+    role TEXT NOT NULL DEFAULT 'student',
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+   );
+   ALTER TABLE students ADD COLUMN IF NOT EXISTS password_hash TEXT;
+   ALTER TABLE students ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'student';
+   ALTER TABLE students ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true;
+   CREATE TABLE IF NOT EXISTS progress(
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    lesson_id TEXT NOT NULL,
+    completed_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY(student_id,course_id,lesson_id)
+   );
+   CREATE TABLE IF NOT EXISTS notes(
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    lesson_id TEXT NOT NULL,
+    note TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY(student_id,lesson_id)
+   );
+   CREATE TABLE IF NOT EXISTS enrollments(
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY(student_id,course_id)
+   );
+   CREATE TABLE IF NOT EXISTS certificates(
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    code TEXT UNIQUE NOT NULL,
+    issued_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(student_id,course_id)
+   );
+  `);
   dbReady=true;return true;
  }catch(e){console.error("DB:",e.message);return false}
 }
@@ -67,7 +107,7 @@ function verifyPassword(password,stored){
 const sessions=new Map();
 function session(req){const t=req.headers.authorization?.replace("Bearer ","");return t?sessions.get(t):null}
 function auth(req,res,next){const s=session(req);if(!s)return res.status(401).json({error:"Faça login para continuar"});req.user=s;next()}
-app.get("/api/health",async(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.1.0",database:!!pool&&dbReady}));
+app.get("/api/health",async(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.3.0",database:!!pool&&dbReady}));
 app.get("/api/courses",(_q,r)=>r.json(courses.map(publicCourse)));
 app.get("/api/courses/:id",(q,r)=>{const c=courses.find(x=>x.id===q.params.id);if(!c)return r.status(404).json({error:"Curso não encontrado"});r.json(c)});
 app.post("/api/auth/login",async(q,r)=>{
