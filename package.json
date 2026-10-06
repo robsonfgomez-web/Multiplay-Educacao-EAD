@@ -11,8 +11,7 @@
     "express": "^5.1.0",
     "pg": "^8.16.3",
     "@capacitor/core": "^7.4.4",
-    "@capacitor/android": "^7.4.4",
-    "@capacitor/status-bar": "^7.4.4"
+    "@capacitor/android": "^7.4.4"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.4"
