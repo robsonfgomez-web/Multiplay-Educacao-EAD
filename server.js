@@ -137,7 +137,7 @@ function verifyPassword(password,stored){
 const sessions=new Map();
 function session(req){const t=req.headers.authorization?.replace("Bearer ","");return t?sessions.get(t):null}
 function auth(req,res,next){const s=session(req);if(!s)return res.status(401).json({error:"Faça login para continuar"});req.user=s;next()}
-app.get("/api/health",async(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.4.0",database:!!pool&&dbReady}));
+app.get("/api/health",async(_q,r)=>r.json({ok:true,platform:"Multiplay Educação EAD",version:"1.4.1",database:!!pool&&dbReady}));
 app.get("/api/courses",(_q,r)=>r.json(courses.map(publicCourse)));
 app.get("/api/courses/:id",(q,r)=>{const c=courses.find(x=>x.id===q.params.id);if(!c)return r.status(404).json({error:"Curso não encontrado"});r.json(c)});
 app.post("/api/auth/login",async(q,r)=>{
