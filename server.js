@@ -7,7 +7,14 @@ const {Pool}=pg;
 const __filename=fileURLToPath(import.meta.url),__dirname=path.dirname(__filename);
 const app=express(),PORT=process.env.PORT||3000;
 app.use(express.json({limit:"1mb"}));
-app.use((req,res,next)=>{res.set("Cache-Control","no-store");next()});
+app.use((req,res,next)=>{
+ res.set("Cache-Control","no-store");
+ res.set("Access-Control-Allow-Origin","*");
+ res.set("Access-Control-Allow-Headers","Content-Type, Authorization");
+ res.set("Access-Control-Allow-Methods","GET,POST,OPTIONS");
+ if(req.method==="OPTIONS")return res.sendStatus(204);
+ next();
+});
 app.use(express.static(path.join(__dirname,"public")));
 
 const courses=[
