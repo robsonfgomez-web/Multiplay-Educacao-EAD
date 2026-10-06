@@ -1,10 +1,13 @@
 const API_BASE="https://multiplay-educacao-ead.onrender.com";
+document.documentElement.classList.toggle("capacitor-app",!!window.Capacitor);
 const app=document.getElementById("app"),modal=document.getElementById("modal");
 const state={
  courses:[],course:null,lesson:null,
  done:JSON.parse(localStorage.getItem("mp_done")||"{}"),
  quizPassed:JSON.parse(localStorage.getItem("mp_quiz_passed")||"{}"),
  notes:{},user:JSON.parse(localStorage.getItem("mp_user")||"null"),
+ enrollments:JSON.parse(localStorage.getItem("mp_enrollments")||"[]"),
+ history:[],
  token:localStorage.getItem("mp_token")||"",page:"home"
 };
 const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
