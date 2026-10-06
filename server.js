@@ -18,7 +18,7 @@ app.use((req,res,next)=>{
 app.use(express.static(path.join(__dirname,"public")));
 
 const courses=[
-{id:"ingles-a1",title:"Inglês Essencial A1",category:"Idiomas",hours:40,level:"Iniciante",cover:"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=85",description:"Curso introdutório de inglês para comunicação cotidiana, vocabulário, compreensão e pronúncia.",modules:[
+{id:"ingles-a1",title:"Curso de Inglês Básico",category:"Idiomas",hours:40,level:"Básico",cover:"https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1400&q=85",description:"Curso introdutório de inglês para comunicação cotidiana, vocabulário, compreensão e pronúncia.",modules:[
 {id:"m1",title:"Fundamentos da comunicação",lessons:[
 {id:"l1",title:"Apresentação e objetivos",duration:"08:42",description:"Conheça a estrutura do curso e os objetivos de aprendizagem.",quiz:{question:"Qual é o objetivo desta aula?",options:["Conhecer a estrutura do curso","Fazer a prova final","Emitir o certificado"],answer:0}},
 {id:"l2",title:"Greetings: cumprimentos",duration:"12:10",description:"Vocabulário essencial para cumprimentos e apresentações."},
