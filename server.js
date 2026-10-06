@@ -40,7 +40,7 @@ const courses=[
 
 const flat=c=>c.modules.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})));
 const publicCourse=c=>({...c,modules:c.modules.map(m=>({...m,lessons:m.lessons.map(l=>{const {video,...rest}=l;return rest})}))});
-const safeUser=u=>({id:u.id,name:u.name,email:u.email});
+const safeUser=u=>({id:u.id,name:u.name,email:u.email,role:u.role||"student"});
 const pool=process.env.DATABASE_URL?new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}}):null;
 let dbReady=false;
 async function db(){
@@ -52,7 +52,18 @@ async function db(){
   dbReady=true;return true;
  }catch(e){console.error("DB:",e.message);return false}
 }
-const demo={id:"demo",name:"Aluno Multiplay",email:"aluno@multiplay.local"};
+const demo={id:"demo",name:"Aluno Multiplay",email:"aluno@multiplay.local",role:"student"};
+function hashPassword(password){
+  const salt=crypto.randomBytes(16).toString("hex");
+  const hash=crypto.scryptSync(password,salt,64).toString("hex");
+  return `${salt}:${hash}`;
+}
+function verifyPassword(password,stored){
+  const [salt,hash]=String(stored||"").split(":");
+  if(!salt||!hash)return false;
+  const derived=crypto.scryptSync(password,salt,64).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(hash,"hex"),Buffer.from(derived,"hex"));
+}
 const sessions=new Map();
 function session(req){const t=req.headers.authorization?.replace("Bearer ","");return t?sessions.get(t):null}
 function auth(req,res,next){const s=session(req);if(!s)return res.status(401).json({error:"Faça login para continuar"});req.user=s;next()}
@@ -65,13 +76,13 @@ app.post("/api/auth/login",async(q,r)=>{
  if(email==="aluno@multiplay.local"&&password==="123456"){const token=crypto.randomUUID();sessions.set(token,demo);return r.json({token,user:demo,mode:"demo"})}
  if(!pool)return r.status(401).json({error:"Acesso de demonstração: aluno@multiplay.local / 123456"});
  const result=await pool.query("SELECT * FROM students WHERE lower(email)=lower($1)",[email]);
- const u=result.rows[0];if(!u||u.password!==password)return r.status(401).json({error:"E-mail ou senha inválidos"});
+ const u=result.rows[0];if(!u||!u.active||!verifyPassword(password,u.password_hash))return r.status(401).json({error:"E-mail ou senha inválidos"});
  const token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u),mode:"database"});
 });
 app.post("/api/auth/register",async(q,r)=>{
  const {name,email,password}=q.body||{};if(!name||!email||!password)return r.status(400).json({error:"Preencha nome, e-mail e senha"});
  if(!pool)return r.status(503).json({error:"Cadastro será ativado quando o banco do ambiente estiver conectado."});
- await db();try{const x=await pool.query("INSERT INTO students(name,email,password) VALUES($1,$2,$3) RETURNING id,name,email",[name,email,password]);const u=x.rows[0],token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u)})}catch(e){r.status(409).json({error:"Este e-mail já está cadastrado."})}
+ await db();try{const x=await pool.query("INSERT INTO students(name,email,password_hash) VALUES($1,$2,$3) RETURNING id,name,email,role",[name,email,hashPassword(password)]);const u=x.rows[0],token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u)})}catch(e){r.status(409).json({error:"Este e-mail já está cadastrado."})}
 });
 app.get("/api/me",auth,async(req,r)=>{
  if(req.user.id==="demo")return r.json(req.user);
@@ -94,10 +105,56 @@ app.post("/api/notes/:lessonId",auth,async(req,r)=>{
  if(req.user.id==="demo")return r.json({ok:true});
  await pool.query("INSERT INTO notes(student_id,lesson_id,note) VALUES($1,$2,$3) ON CONFLICT(student_id,lesson_id) DO UPDATE SET note=EXCLUDED.note,updated_at=NOW()",[req.user.id,req.params.lessonId,String(req.body?.note||"")]);r.json({ok:true});
 });
+function adminOnly(req,res,next){if(req.user?.role!=="admin")return res.status(403).json({error:"Acesso administrativo necessário"});next()}
+app.get("/api/my/enrollments",auth,async(req,r)=>{
+  if(req.user.id==="demo")return r.json(courses.map(c=>({courseId:c.id,status:"active"})));
+  const x=await pool.query("SELECT course_id,status,enrolled_at FROM enrollments WHERE student_id=$1 ORDER BY enrolled_at DESC",[req.user.id]);
+  r.json(x.rows);
+});
+app.post("/api/my/enrollments",auth,async(req,r)=>{
+  const {courseId}=req.body||{};
+  if(!courses.some(c=>c.id===courseId))return r.status(404).json({error:"Curso não encontrado"});
+  if(req.user.id==="demo")return r.json({ok:true,courseId,status:"active"});
+  await pool.query("INSERT INTO enrollments(student_id,course_id) VALUES($1,$2) ON CONFLICT(student_id,course_id) DO UPDATE SET status='active'",[req.user.id,courseId]);
+  r.json({ok:true,courseId,status:"active"});
+});
+app.post("/api/admin/login",async(q,r)=>{
+  const {email,password}=q.body||{};
+  if(!pool)return r.status(503).json({error:"Banco de dados não conectado"});
+  const x=await pool.query("SELECT * FROM students WHERE lower(email)=lower($1) AND role='admin' AND active=true",[email||""]);
+  const u=x.rows[0];
+  if(!u||!verifyPassword(password||"",u.password_hash))return r.status(401).json({error:"Credenciais administrativas inválidas"});
+  const token=crypto.randomUUID();sessions.set(token,safeUser(u));r.json({token,user:safeUser(u)});
+});
+app.get("/api/admin/stats",auth,adminOnly,async(_q,r)=>{
+  const [students,enrollments,conclusions]=await Promise.all([
+    pool.query("SELECT COUNT(*)::int AS n FROM students WHERE role='student' AND active=true"),
+    pool.query("SELECT COUNT(*)::int AS n FROM enrollments WHERE status='active'"),
+    pool.query("SELECT COUNT(*)::int AS n FROM certificates")
+  ]);
+  r.json({courses:courses.length,lessons:courses.reduce((n,c)=>n+flat(c).length,0),students:students.rows[0].n,enrollments:enrollments.rows[0].n,conclusions:conclusions.rows[0].n});
+});
+app.get("/api/admin/students",auth,adminOnly,async(_q,r)=>{
+  const x=await pool.query("SELECT id,name,email,active,created_at FROM students WHERE role='student' ORDER BY created_at DESC");
+  r.json(x.rows);
+});
 app.get("/api/certificates",auth,async(req,r)=>{
  if(req.user.id==="demo")return r.json([]);
- const x=await pool.query("SELECT course_id,MAX(completed_at) AS completed_at FROM progress WHERE student_id=$1 GROUP BY course_id",[req.user.id]);
- const certs=x.rows.filter(row=>{const c=courses.find(z=>z.id===row.course_id);return c&&flat(c).length&&flat(c).every(l=>x.rows.some(y=>y.course_id===c.id&&y.lesson_id===l.id))}).map(row=>({courseId:row.course_id,course:courses.find(c=>c.id===row.course_id).title,date:row.completed_at}));r.json(certs);
+ const x=await pool.query("SELECT id,course_id,issued_at,code FROM certificates WHERE student_id=$1 ORDER BY issued_at DESC",[req.user.id]);
+ r.json(x.rows.map(row=>({id:row.id,courseId:row.course_id,course:courses.find(c=>c.id===row.course_id)?.title||row.course_id,date:row.issued_at,code:row.code})));
+});
+app.post("/api/certificates/issue",auth,async(req,r)=>{
+ if(req.user.id==="demo")return r.status(400).json({error:"O certificado de demonstração não é emitido no banco"});
+ const {courseId}=req.body||{},c=courses.find(x=>x.id===courseId);
+ if(!c)return r.status(404).json({error:"Curso não encontrado"});
+ const total=flat(c).length;
+ const x=await pool.query("SELECT COUNT(*)::int AS n FROM progress WHERE student_id=$1 AND course_id=$2",[req.user.id,courseId]);
+ if(Number(x.rows[0].n)<total)return r.status(400).json({error:"Conclua todas as aulas para emitir o certificado"});
+ const existing=await pool.query("SELECT id,course_id,issued_at,code FROM certificates WHERE student_id=$1 AND course_id=$2",[req.user.id,courseId]);
+ if(existing.rows[0])return r.json(existing.rows[0]);
+ const code="MP-"+crypto.randomBytes(6).toString("hex").toUpperCase();
+ const y=await pool.query("INSERT INTO certificates(student_id,course_id,code) VALUES($1,$2,$3) RETURNING id,course_id,issued_at,code",[req.user.id,courseId,code]);
+ r.json(y.rows[0]);
 });
 await db();
 app.get("/admin",(q,r)=>r.sendFile(path.join(__dirname,"public","admin.html")));
