@@ -1,7 +1,31 @@
 const API_BASE="https://multiplay-educacao-ead.onrender.com";const app=document.getElementById("app"),modal=document.getElementById("modal");const state={courses:[],course:null,lesson:null,done:JSON.parse(localStorage.getItem("mp_done")||"{}"),user:JSON.parse(localStorage.getItem("mp_user")||"null"),token:localStorage.getItem("mp_token")||""};const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));const lessons=c=>c.modules.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})));const pct=c=>{const a=lessons(c);return a.length?Math.round(a.filter(x=>state.done[c.id+"_"+x.id]).length/a.length*100):0};async function api(url,opt={}){opt.headers={...(opt.headers||{}),...(state.token?{Authorization:"Bearer "+state.token}:{})};const r=await fetch(API_BASE+url,opt),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível concluir a operação");return d}async function init(){
- try{state.courses=await api("/api/courses")}catch(_){const r=await fetch("/courses.json");state.courses=await r.json()}
- if(state.token){try{const p=await api("/api/progress");p.forEach(x=>state.done[x.course_id+"_"+x.lesson_id]=true);localStorage.setItem("mp_done",JSON.stringify(state.done))}catch(_){state.token="";localStorage.removeItem("mp_token")}}
- home();document.getElementById("loginBtn").onclick=state.user?profile:login
+ try{
+  const local=await fetch("/courses.json",{cache:"no-store"});
+  if(!local.ok)throw new Error("Catálogo local indisponível");
+  state.courses=await local.json();
+  home();
+ }catch(e){
+  app.innerHTML='<section class="section"><div class="empty">Carregando a plataforma...</div></section>';
+ }
+ try{
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),6000);
+  const r=await fetch(API_BASE+"/api/courses",{signal:controller.signal,cache:"no-store"});
+  clearTimeout(timer);
+  if(r.ok){
+   const remote=await r.json();
+   if(Array.isArray(remote)&&remote.length){state.courses=remote;home();}
+  }
+ }catch(_){}
+ if(state.token){
+  try{
+   const p=await api("/api/progress");
+   p.forEach(x=>state.done[x.course_id+"_"+x.lesson_id]=true);
+   localStorage.setItem("mp_done",JSON.stringify(state.done));
+  }catch(_){}
+ }
+ const loginBtn=document.getElementById("loginBtn");
+ if(loginBtn)loginBtn.onclick=state.user?profile:login;
 }function card(c){const p=pct(c),n=lessons(c).length;return '<article class="card"><img class="cover" src="'+c.cover+'" alt=""><div class="card-body"><span class=pill>'+esc(c.category)+'</span><h3>'+esc(c.title)+'</h3><p class=muted>'+esc(c.description)+'</p><div class=meta><span>'+c.hours+'h</span><span>'+n+' aulas</span><span>'+esc(c.level)+'</span></div><div class=progress style="margin-top:12px"><i style="width:'+p+'%"></i></div><small class=muted>'+p+'% concluído</small><div style="margin-top:14px"><button class=btn data-course="'+c.id+'">Abrir curso</button></div></div></article>'}function home(){app.innerHTML='<section class=hero><div class=hero-copy><span class=eyebrow>MULTIPLAY EDUCAÇÃO · EAD</span><h1>Aprenda no seu ritmo. Evolua na sua carreira.</h1><p>Cursos online, aulas organizadas por módulos, atividades, progresso e certificado em uma única plataforma.</p><div class=hero-actions><button class=btn data-page=catalog>Explorar cursos</button><button class=outline data-page=my>Meus estudos</button></div></div></section><section class=section><h2>Comece pelos cursos em destaque</h2><p class=muted>Catálogo organizado por área e nível.</p><div class=grid>'+state.courses.map(card).join("")+'</div></section>';bind()}function catalog(){app.innerHTML='<section class=section><h1>Catálogo de cursos</h1><p class=muted>Encontre sua próxima formação.</p><input class=field id=q placeholder="Buscar por curso ou área"><div class=grid id=grid style="margin-top:20px"></div></section>';const render=()=>{const q=document.getElementById("q").value.toLowerCase();document.getElementById("grid").innerHTML=state.courses.filter(c=>(c.title+" "+c.category).toLowerCase().includes(q)).sort((a,b)=>a.title.localeCompare(b.title,"pt-BR")).map(card).join("")||'<div class=empty>Nenhum curso encontrado.</div>';bind()};document.getElementById("q").oninput=render;render()}function my(){const list=state.courses.filter(c=>pct(c)>0);app.innerHTML='<section class=section><h1>Meus cursos</h1><p class=muted>Continue de onde parou.</p>'+ (list.length?'<div class=grid>'+list.map(card).join("")+'</div>':'<div class=empty>Você ainda não iniciou um curso. Escolha um curso no catálogo para começar.</div>')+'</section>';bind()}function library(){const b=[["Comunicação Profissional","https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=700&q=85"],["Aprender e Ensinar","https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=700&q=85"],["English Practice","https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=700&q=85"],["Gestão e Carreira","https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=700&q=85"]];app.innerHTML='<section class=section><h1>Biblioteca</h1><p class=muted>Materiais complementares para seus estudos.</p><div class=books>'+b.map(x=>'<article class=book><img src="'+x[1]+'"><h3>'+esc(x[0])+'</h3><p class=muted>Leitura complementar</p></article>').join("")+'</div></section>'}function certs(){const done=state.courses.filter(c=>pct(c)===100);app.innerHTML='<section class=section><h1>Certificados</h1><p class=muted>Seu certificado fica disponível após concluir todas as aulas do curso.</p>'+ (done.length?'<div class=grid>'+done.map(c=>'<article class=card><div class=card-body><span class=pill>CONCLUÍDO</span><h3>'+esc(c.title)+'</h3><button class=btn data-cert="'+c.id+'">Emitir certificado</button></div></article>').join("")+'</div>':'<div class=empty>Nenhum certificado disponível ainda.</div>')+'</section>';bind()}async function certificate(c){
  const name=state.user?.name||"Aluno Multiplay";
  if(state.token&&state.user?.id!=="demo"){try{await api("/api/certificates/issue",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({courseId:c.id})})}catch(e){return alert(e.message)}}
