@@ -383,5 +383,369 @@
         ]
       }
     ]
+  },
+  {
+    "id": "espanhol-iniciante",
+    "title": "Espanhol para Iniciantes",
+    "category": "Idiomas",
+    "hours": 20,
+    "level": "Iniciante",
+    "cover": "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1400&q=85",
+    "description": "Saudações, apresentações, vocabulário e estruturas básicas para começar a conversar em espanhol.",
+    "modules": [
+      {
+        "id": "Primeiros passos",
+        "title": "Primeiros passos",
+        "lessons": [
+          {
+            "id": "es1l1",
+            "title": "Saudações e apresentações",
+            "duration": "50 min",
+            "description": "Saludos, presentaciones e despedidas.",
+            "videoId": "Kc10Q1LKrRo",
+            "quiz": {
+              "question": "Qual expressão é usada para uma saudação?",
+              "options": [
+                "Hola",
+                "Gracias",
+                "Adiós"
+              ],
+              "answer": 0
+            }
+          },
+          {
+            "id": "es1l2",
+            "title": "Vocabulário essencial",
+            "duration": "40 min",
+            "description": "Palavras e expressões frequentes."
+          },
+          {
+            "id": "es1l3",
+            "title": "Frases do cotidiano",
+            "duration": "45 min",
+            "description": "Estruturas simples para comunicação."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "frances-iniciante",
+    "title": "Francês Básico para Iniciantes",
+    "category": "Idiomas",
+    "hours": 20,
+    "level": "Iniciante",
+    "cover": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=85",
+    "description": "Estruturas básicas, sujeito, verbos e construção de frases em francês.",
+    "modules": [
+      {
+        "id": "Estruturas básicas",
+        "title": "Estruturas básicas",
+        "lessons": [
+          {
+            "id": "fr1l1",
+            "title": "Estruturas básicas",
+            "duration": "Aula em vídeo",
+            "description": "Sujeito, verbos e construção de frases.",
+            "videoId": "AWAj9BVcTC0",
+            "quiz": {
+              "question": "Qual é o foco inicial da aula?",
+              "options": [
+                "Estruturas de frases",
+                "Certificado",
+                "Prova final"
+              ],
+              "answer": 0
+            }
+          },
+          {
+            "id": "fr1l2",
+            "title": "Sujeito e verbos",
+            "duration": "Aula prática",
+            "description": "Construção de frases simples."
+          },
+          {
+            "id": "fr1l3",
+            "title": "Prática guiada",
+            "duration": "Aula prática",
+            "description": "Exercícios de construção de frases."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "excel-completo",
+    "title": "Excel Prático para o Trabalho",
+    "category": "Tecnologia",
+    "hours": 20,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1400&q=85",
+    "description": "Planilhas, fórmulas, organização e prática de Excel para rotina profissional.",
+    "modules": [
+      {
+        "id": "Planilhas na prática",
+        "title": "Planilhas na prática",
+        "lessons": [
+          {
+            "id": "ec1l1",
+            "title": "Introdução ao Excel",
+            "duration": "Aula em vídeo",
+            "description": "Primeiros passos e ambiente do Excel.",
+            "videoId": "OV2x8ghwq1M",
+            "quiz": {
+              "question": "O que é uma planilha?",
+              "options": [
+                "Um espaço para organizar dados",
+                "Um navegador",
+                "Um editor de vídeo"
+              ],
+              "answer": 0
+            }
+          },
+          {
+            "id": "ec1l2",
+            "title": "Organização de dados",
+            "duration": "Aula prática",
+            "description": "Linhas, colunas e organização."
+          },
+          {
+            "id": "ec1l3",
+            "title": "Fórmulas essenciais",
+            "duration": "Aula prática",
+            "description": "Cálculos e funções iniciais."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gestao-pessoas",
+    "title": "Gestão de Pessoas",
+    "category": "Profissionalizantes",
+    "hours": 18,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1400&q=85",
+    "description": "Liderança, comunicação, equipes e desenvolvimento profissional.",
+    "modules": [
+      {
+        "id": "Fundamentos de gestão",
+        "title": "Fundamentos de gestão",
+        "lessons": [
+          {
+            "id": "gp1l1",
+            "title": "Papel do gestor",
+            "duration": "Aula",
+            "description": "Responsabilidades e competências."
+          },
+          {
+            "id": "gp1l2",
+            "title": "Comunicação com a equipe",
+            "duration": "Aula",
+            "description": "Comunicação e alinhamento."
+          },
+          {
+            "id": "gp1l3",
+            "title": "Desenvolvimento de pessoas",
+            "duration": "Aula",
+            "description": "Feedback e desenvolvimento.",
+            "quiz": {
+              "question": "Qual prática ajuda no desenvolvimento da equipe?",
+              "options": [
+                "Feedback",
+                "Ignorar resultados",
+                "Evitar comunicação"
+              ],
+              "answer": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marketing-pratico",
+    "title": "Marketing Digital Prático",
+    "category": "Marketing",
+    "hours": 18,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?auto=format&fit=crop&w=1400&q=85",
+    "description": "Público, conteúdo, redes sociais e fundamentos de conversão.",
+    "modules": [
+      {
+        "id": "Estratégia digital",
+        "title": "Estratégia digital",
+        "lessons": [
+          {
+            "id": "mk1l1",
+            "title": "Público e posicionamento",
+            "duration": "Aula",
+            "description": "Definição de público e posicionamento.",
+            "videoId": "_Ng6mYya3D8"
+          },
+          {
+            "id": "mk1l2",
+            "title": "Conteúdo para redes",
+            "duration": "Aula",
+            "description": "Planejamento de conteúdo.",
+            "videoId": "_Ng6mYya3D8"
+          },
+          {
+            "id": "mk1l3",
+            "title": "Conversão",
+            "duration": "Aula",
+            "description": "Noções de conversão.",
+            "videoId": "_Ng6mYya3D8",
+            "quiz": {
+              "question": "O que vem antes de criar uma campanha?",
+              "options": [
+                "Definir o público",
+                "Ignorar o público",
+                "Publicar sem objetivo"
+              ],
+              "answer": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "empreendedorismo-pratico",
+    "title": "Empreendedorismo na Prática",
+    "category": "Negócios",
+    "hours": 18,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1400&q=85",
+    "description": "Ideia, oportunidade, planejamento e execução de um pequeno projeto.",
+    "modules": [
+      {
+        "id": "Da ideia ao projeto",
+        "title": "Da ideia ao projeto",
+        "lessons": [
+          {
+            "id": "ep1l1",
+            "title": "Ideia e oportunidade",
+            "duration": "Aula",
+            "description": "Como identificar oportunidades.",
+            "videoId": "swe0zFQKrO4"
+          },
+          {
+            "id": "ep1l2",
+            "title": "Planejamento",
+            "duration": "Aula",
+            "description": "Primeiros passos do projeto.",
+            "videoId": "swe0zFQKrO4"
+          },
+          {
+            "id": "ep1l3",
+            "title": "Execução",
+            "duration": "Aula",
+            "description": "Tirando o projeto do papel.",
+            "videoId": "swe0zFQKrO4",
+            "quiz": {
+              "question": "Qual é uma etapa essencial de um projeto?",
+              "options": [
+                "Planejamento",
+                "Improviso permanente",
+                "Não definir objetivos"
+              ],
+              "answer": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "comunicacao-profissional",
+    "title": "Comunicação Profissional",
+    "category": "Profissionalizantes",
+    "hours": 12,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1400&q=85",
+    "description": "Comunicação clara, apresentações, escrita profissional e relacionamento.",
+    "modules": [
+      {
+        "id": "Comunicação",
+        "title": "Comunicação",
+        "lessons": [
+          {
+            "id": "cp1l1",
+            "title": "Comunicação clara",
+            "duration": "Aula",
+            "description": "Como transmitir mensagens com clareza."
+          },
+          {
+            "id": "cp1l2",
+            "title": "Falar em público",
+            "duration": "Aula",
+            "description": "Estrutura e segurança para apresentações."
+          },
+          {
+            "id": "cp1l3",
+            "title": "Comunicação escrita",
+            "duration": "Aula",
+            "description": "E-mails e textos profissionais.",
+            "quiz": {
+              "question": "Qual característica melhora uma comunicação profissional?",
+              "options": [
+                "Clareza",
+                "Confusão",
+                "Excesso de ruído"
+              ],
+              "answer": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "powerpoint-pratico",
+    "title": "PowerPoint para Apresentações",
+    "category": "Tecnologia",
+    "hours": 12,
+    "level": "Básico",
+    "cover": "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1400&q=85",
+    "description": "Estruture apresentações, organize slides e apresente ideias com clareza.",
+    "modules": [
+      {
+        "id": "Slides profissionais",
+        "title": "Slides profissionais",
+        "lessons": [
+          {
+            "id": "pt1l1",
+            "title": "Estrutura do slide",
+            "duration": "Aula",
+            "description": "Organização visual.",
+            "videoId": "l_oYQPyjfy0"
+          },
+          {
+            "id": "pt1l2",
+            "title": "Texto e imagens",
+            "duration": "Aula",
+            "description": "Elementos visuais.",
+            "videoId": "l_oYQPyjfy0"
+          },
+          {
+            "id": "pt1l3",
+            "title": "Apresentação final",
+            "duration": "Aula",
+            "description": "Revisão e apresentação.",
+            "videoId": "l_oYQPyjfy0",
+            "quiz": {
+              "question": "Uma boa apresentação deve ter:",
+              "options": [
+                "Estrutura e clareza",
+                "Texto sem organização",
+                "Informação aleatória"
+              ],
+              "answer": 0
+            }
+          }
+        ]
+      }
+    ]
   }
 ]
