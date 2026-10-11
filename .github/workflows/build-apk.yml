@@ -35,6 +35,7 @@ jobs:
           test -s public/index.html
           test -s public/app.js
           test -s public/courses.json
+          node --check public/app.js
           node --input-type=module -e "import fs from 'node:fs'; const courses=JSON.parse(fs.readFileSync('public/courses.json','utf8')); if(!Array.isArray(courses)||courses.length<1) process.exit(1); console.log('Catálogo válido:', courses.length, 'cursos')"
 
       - name: Create Android project
@@ -47,9 +48,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
+      - name: Prepare customer-friendly APK filename
+        run: mv android/app/build/outputs/apk/debug/Multiplay-Educacao.apk android/app/build/outputs/apk/debug/Multiplay-Educacao.apk
+
       - name: Verify APK is installable package
         run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/debug/Multiplay-Educacao.apk"
           test -s "$APK"
           SIZE=$(stat -c%s "$APK")
           echo "APK size: $SIZE bytes"
@@ -65,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Multiplay-Educacao-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/Multiplay-Educacao.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -78,5 +82,5 @@ jobs:
             APK de teste do aplicativo Multiplay Educação para Android.
             O arquivo só é publicado após as verificações do pacote.
           make_latest: true
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/Multiplay-Educacao.apk
           fail_on_unmatched_files: true
