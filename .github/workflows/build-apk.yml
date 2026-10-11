@@ -49,7 +49,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Prepare customer-friendly APK filename
-        run: mv android/app/build/outputs/apk/debug/Multiplay-Educacao.apk android/app/build/outputs/apk/debug/Multiplay-Educacao.apk
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/Multiplay-Educacao.apk
 
       - name: Verify APK is installable package
         run: |
