@@ -1,35 +1,82 @@
 name: Build Multiplay Educação APK
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
+
       - name: Install dependencies
-        run: npm install
-      - name: Add Android platform
+        run: npm install --no-audit --no-fund
+
+      - name: Validate student app files
+        run: |
+          test -s public/index.html
+          test -s public/app.js
+          test -s public/courses.json
+          node --input-type=module -e "import fs from 'node:fs'; const courses=JSON.parse(fs.readFileSync('public/courses.json','utf8')); if(!Array.isArray(courses)||courses.length<1) process.exit(1); console.log('Catálogo válido:', courses.length, 'cursos')"
+
+      - name: Create Android project
         run: npx cap add android
-      - name: Sync web app
+
+      - name: Sync student app into Android
         run: npx cap sync android
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
-      - name: Upload APK
+
+      - name: Verify APK is installable package
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          SIZE=$(stat -c%s "$APK")
+          echo "APK size: $SIZE bytes"
+          if [ "$SIZE" -lt 1000000 ]; then
+            echo "APK suspiciously small; refusing to publish."
+            exit 1
+          fi
+          unzip -l "$APK" | grep -q 'classes.dex'
+          unzip -l "$APK" | grep -q 'AndroidManifest.xml'
+          jarsigner -verify "$APK"
+
+      - name: Upload APK build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: multiplay-educacao-apk
+          name: Multiplay-Educacao-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: educacao-latest
+          name: Multiplay Educação — APK para teste
+          body: |
+            APK de teste do aplicativo Multiplay Educação para Android.
+            O arquivo só é publicado após as verificações do pacote.
+          make_latest: true
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          fail_on_unmatched_files: true
