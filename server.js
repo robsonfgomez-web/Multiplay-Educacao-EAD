@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import crypto from "crypto";
+import fs from "fs";
 import {fileURLToPath} from "url";
 import pg from "pg";
 const {Pool}=pg;
@@ -67,6 +68,14 @@ courses.push(
 {id:"comunicacao-profissional",title:"Comunicação Profissional",category:"Profissionalizantes",hours:12,level:"Básico",cover:"https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1400&q=85",description:"Comunicação clara, apresentações, escrita profissional e relacionamento.",modules:[{id:"cp1",title:"Comunicação",lessons:[{id:"cp1l1",title:"Comunicação clara",duration:"Aula",description:"Como transmitir mensagens com clareza."},{id:"cp1l2",title:"Falar em público",duration:"Aula",description:"Estrutura e segurança para apresentações."},{id:"cp1l3",title:"Comunicação escrita",duration:"Aula",description:"E-mails e textos profissionais.",quiz:{question:"Qual característica melhora uma comunicação profissional?",options:["Clareza","Confusão","Excesso de ruído"],answer:0}}]}]},
 {id:"powerpoint-pratico",title:"PowerPoint para Apresentações",category:"Tecnologia",hours:12,level:"Básico",cover:"https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1400&q=85",description:"Estruture apresentações, organize slides e apresente ideias com clareza.",modules:[{id:"pt1",title:"Slides profissionais",lessons:[{id:"pt1l1",title:"Estrutura do slide",duration:"Aula",description:"Organização visual.",videoId:"l_oYQPyjfy0"},{id:"pt1l2",title:"Texto e imagens",duration:"Aula",description:"Elementos visuais.",videoId:"l_oYQPyjfy0"},{id:"pt1l3",title:"Apresentação final",duration:"Aula",description:"Revisão e apresentação.",videoId:"l_oYQPyjfy0",quiz:{question:"Uma boa apresentação deve ter:",options:["Estrutura e clareza","Texto sem organização","Informação aleatória"],answer:0}}]}]}
 );
+
+// Catálogo unificado: conserva os cursos existentes e carrega os cursos próprios publicados.
+try {
+ const catalogPath=path.join(__dirname,"public","courses.json");
+ const published=JSON.parse(fs.readFileSync(catalogPath,"utf8"));
+ for(const item of published){ if(item && item.id && !courses.some(c=>c.id===item.id)) courses.push(item); }
+ console.log("Multiplay EAD: catálogo carregado",courses.length,"cursos.");
+} catch(e) { console.error("Não foi possível carregar catálogo publicado:",e.message); }
 
 const flat=c=>c.modules.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})));
 const publicCourse=c=>({...c,modules:c.modules.map(m=>({...m,lessons:m.lessons.map(l=>{const {video,...rest}=l;return rest})}))});
