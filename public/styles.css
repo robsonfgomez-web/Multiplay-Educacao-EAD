@@ -39,3 +39,76 @@ footer{padding-bottom:calc(105px + var(--safe-bottom))}
 @media(max-width:1000px){.portal{width:100%;margin:0;border-radius:0;border-left:0;border-right:0}.portal-top{padding:18px 20px}.portal-brand em{font-size:17px}.portal-hero{padding:32px 25px}.portal-section{padding-left:24px;padding-right:24px}.portal-course-row{grid-template-columns:repeat(3,minmax(0,1fr));overflow:auto}.quick-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){body{padding-bottom:calc(82px + var(--safe-bottom))}.portal{margin:0}.portal-top{min-height:76px;padding:13px 14px}.portal-brand{gap:8px}.portal-mark{width:34px;height:34px;font-size:16px}.portal-brand>div b{font-size:20px}.portal-brand>div span{font-size:7px;letter-spacing:2px}.portal-brand em{display:none}.portal-user .avatar{width:39px;height:39px;font-size:15px}.portal-user strong{font-size:13px}.portal-user small{font-size:11px}.portal-user>span{font-size:22px}.portal-hero{min-height:310px;padding:28px 20px}.portal-hero-copy{max-width:100%}.portal-hero-copy h1{font-size:34px}.portal-hero-copy p{font-size:17px;max-width:280px}.portal-hero-art{position:absolute;right:-75px;bottom:-20px;width:260px;opacity:.55}.portal-actions{gap:8px}.portal-actions .btn,.portal-dark-btn{padding:11px 13px;font-size:12px}.portal-section{padding:0 14px 24px}.portal-section h2{font-size:21px}.quick-grid{gap:9px}.quick-grid button{min-height:105px}.quick-grid b{font-size:15px}.quick-grid small{font-size:10px}.portal-course-row{grid-template-columns:repeat(3,170px);overflow-x:auto;padding-bottom:4px}.portal-course img{height:82px}.category-course img{height:88px}.bottom-nav{width:100%;height:76px;border-radius:18px 18px 0 0;padding-left:7px;padding-right:7px}.bottom-item{font-size:10px}.bottom-item .nav-icon{font-size:21px}.catalog-back{margin-top:0}}
 @media(max-width:380px){.portal-hero-copy h1{font-size:29px}.portal-hero-copy p{font-size:15px}.portal-actions .btn,.portal-dark-btn{font-size:10px}.quick-grid button>span{font-size:27px}}
+
+
+/* Multiplay Educação — refinamento visual da plataforma */
+:root{--bg:#07162d;--panel:#0c2038;--panel2:#112b49;--text:#f6f8fc;--muted:#b7c7da;--accent:#ff850a;--line:#294765;--green:#2ac58a;--blue:#3b82c4}
+html{scroll-behavior:smooth}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;background:radial-gradient(ellipse at 80% -5%,#173e65 0,transparent 37%),linear-gradient(180deg,#07162d,#061120 78%)}
+header{background:rgba(5,17,34,.96);border-bottom-color:#2a435f;box-shadow:0 8px 25px #0002}
+.brand{letter-spacing:-.5px}.brand span{color:var(--accent)}
+.btn,.primary{background:linear-gradient(110deg,#ff9a1c,#ff7900);color:#17243a!important;border:1px solid #ffab42;border-radius:11px;box-shadow:0 7px 18px #ff850a1a;transition:transform .16s,filter .16s,box-shadow .16s}
+.btn:hover,.primary:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 10px 23px #ff850a28}
+.outline,nav button{border-radius:10px;transition:background .16s,border-color .16s}
+nav button:hover,.outline:hover{background:#173452}
+.section{padding-top:42px;padding-bottom:40px}
+.hero{min-height:455px;background:linear-gradient(90deg,#07162d 0%,#07162df0 42%,#07162d25 100%),url("https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1800&q=85") center/cover;border-bottom:1px solid #294765}
+.hero h1{letter-spacing:-1.8px;line-height:1.04}
+.hero p,.muted{color:#c2d1e2}
+.eyebrow,.pill{border-color:#3b5877;background:#102945;color:#ffd2a0}
+.card{background:linear-gradient(155deg,#102945,#091a2e);border-color:#2a4a68;border-radius:16px;box-shadow:0 8px 24px #0002;transition:transform .18s,border-color .18s,box-shadow .18s}
+.card:hover{transform:translateY(-2px);border-color:#52799f;box-shadow:0 14px 30px #0003}
+.cover{background-color:#173957}
+.card-body{padding:18px}
+.card h3{letter-spacing:-.25px}
+.meta{color:#b7c7da}
+.progress{background:#20354c}.progress i{background:linear-gradient(90deg,#ff850a,#ffd18b)}
+.portal{border:1px solid #294968;background:#081a30;box-shadow:0 22px 60px #0003}
+.portal-top{background:linear-gradient(110deg,#0c2948,#081a30);border-bottom:1px solid #2b4b69}
+.portal-mark{background:linear-gradient(135deg,#ff9a1c,#ff7900)!important;color:#17243a!important;border-radius:11px}
+.portal-brand>div b{letter-spacing:-.6px}
+.portal-brand>div span{color:#ffb15b}
+.portal-user .avatar{border-color:#ff9a1c;box-shadow:0 0 0 3px #ff850a18}
+.portal-hero{background:radial-gradient(ellipse at 90% 0,#245078 0,transparent 45%),linear-gradient(115deg,#0c2b4a,#07192d 75%);border:1px solid #2e5578;border-radius:22px;box-shadow:0 16px 38px #0002}
+.portal-hero-copy h1{letter-spacing:-1px}
+.portal-hero-copy p{color:#c6d6e7}
+.portal-hero-art{opacity:.85}
+.portal-dark-btn{border:1px solid #496c8d;background:#0c2440;color:#edf5ff;border-radius:10px}
+.portal-section h2,.section-title{letter-spacing:-.5px}
+.quick-grid button,.quick-grid a{border:1px solid #294c6c!important;border-radius:15px!important;background:linear-gradient(145deg,#102b48,#0a1c31)!important;transition:transform .18s,border-color .18s,box-shadow .18s}
+.quick-grid button:hover,.quick-grid a:hover{transform:translateY(-2px);border-color:#5a82a8!important;box-shadow:0 12px 24px #0002}
+.quick-grid button>span{color:#ffb15b}
+.portal-course,.portal-course-row .card{border-radius:13px}
+.portal-course img{border-radius:9px 9px 0 0}
+.portal-course-name{letter-spacing:-.15px}
+.portal-course>span{background:#ff850a;color:#17243a}
+.field,input,select,textarea{border-radius:11px}
+.field:focus,input:focus,select:focus,textarea:focus{outline:none;border-color:#ff9a1c;box-shadow:0 0 0 3px #ff850a1c}
+.catalog-tools .field,.field{background:#081a2e;color:#f5f8fc;border-color:#2b4a68}
+.catalog-summary{color:#c2d1e2}
+.library-tabs button,.tab{border-radius:999px}
+.book,.reader-card,.history-item,.plan,.cert,.module,.lesson,.activity-box{border-radius:13px}
+.book,.reader-card,.history-item,.plan,.cert,.module,.lesson{border-color:#2b4a68}
+.bottom-nav{background:rgba(6,20,38,.97);border:1px solid #2c4b69;box-shadow:0 -8px 32px #0003;backdrop-filter:blur(18px)}
+.bottom-item{color:#aebfd3;border-radius:12px;transition:color .16s,background .16s}
+.bottom-item.active{color:#ffb15b;background:#173452}
+.bottom-item .nav-icon{font-weight:800}
+.modal{backdrop-filter:blur(7px)}
+.modal-box{border:1px solid #315271;border-radius:20px;background:linear-gradient(150deg,#102944,#08192d);box-shadow:0 24px 70px #0006}
+.auth-tabs{background:#091b2f;border-radius:12px;padding:4px}
+.auth-tabs button{border-radius:9px}
+.error{border-radius:10px}
+.empty{border:1px dashed #365675;border-radius:14px;background:#0a1d32;color:#c0d0e2;padding:22px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffb45d;outline-offset:2px}
+@media(max-width:650px){
+ body{padding-bottom:calc(88px + var(--safe-bottom))}
+ .hero{min-height:370px;padding:55px 6%;background-position:58% center}
+ .hero h1{font-size:clamp(34px,9vw,48px);letter-spacing:-1px}
+ .hero p{font-size:15px}
+ .section{padding-top:30px;padding-bottom:28px}
+ .portal{border-radius:0}
+ .portal-hero{border-radius:18px}
+ .portal-hero-copy h1{font-size:clamp(29px,8vw,35px)}
+ .portal-course-row{scrollbar-width:thin;scrollbar-color:#456a8e transparent}
+ .bottom-nav{height:80px;padding-bottom:var(--safe-bottom)}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
