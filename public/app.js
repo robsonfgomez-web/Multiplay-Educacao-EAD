@@ -12,18 +12,19 @@ const state={
  token:localStorage.getItem("mp_token")||"",page:"home"
 };
 const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-const normalizeText=v=>String(v??"").normalize("NFC").replace(/\s+/g," ").trim();
+const normalizeText=v=>String(v??"").normalize("NFC").trim().replace(/\s+/g," ");
+const plainText=v=>normalizeText(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const canonicalCategory=v=>{
- const raw=normalizeText(v),key=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+ const raw=normalizeText(v),key=plainText(raw).replace(/[^a-z0-9]+/g," ").trim();
  const categories={"administracao":"Administração","artes e cultura":"Artes e Cultura","desenvolvimento":"Desenvolvimento","direito":"Direito","financas":"Finanças","gestao":"Gestão","idiomas":"Idiomas","logistica":"Logística","marketing":"Marketing","negocios":"Negócios","profissionalizantes":"Profissionalizantes","recursos humanos":"Recursos Humanos","saude":"Saúde","tecnologia":"Tecnologia"};
  return categories[key]||raw.toLocaleLowerCase("pt-BR").replace(/(^|\s)\p{L}/gu,m=>m.toLocaleUpperCase("pt-BR"));
 };
 const canonicalLevel=c=>{
- const raw=normalizeText(c.level),key=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const key=plainText(c.level);
  if(/avancad|advanced/.test(key))return "Avançado";
  if(/intermedi|intermediate|medio/.test(key))return "Intermediário";
  if(/iniciante|beginner|basico|basic/.test(key))return "Básico";
- const text=(normalizeText(c.title)+" "+normalizeText(c.description)+" "+normalizeText(c.category)).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const text=plainText([c.title,c.description,c.category].join(" "));
  if(/avancad|advanced|especialista|estrategic|estrategia avancada/.test(text))return "Avançado";
  if(/intermedi|intermediate|pratico|completo|profissional|gestao de pessoas|excel para o trabalho/.test(text))return "Intermediário";
  return "Básico";
