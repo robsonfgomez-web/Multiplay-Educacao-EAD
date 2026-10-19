@@ -37,10 +37,24 @@ async function init(){
  }
  try{
   const r=await fetch("/courses.json",{cache:"no-store"});
-  state.courses=await r.json();
+  if(!r.ok) throw Error("Catálogo local indisponível");
+  const localCourses=await r.json();
+  if(!Array.isArray(localCourses)||localCourses.length===0) throw Error("Catálogo local vazio");
+  state.courses=localCourses;
  }catch(_){
-  app.innerHTML='<section class="section"><div class="empty">Carregando a plataforma...</div></section>';
-  return;
+  try{
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+   const r=await fetch(API_BASE+"/api/courses",{cache:"no-store",signal:controller.signal});
+   clearTimeout(timer);
+   if(!r.ok) throw Error("API de cursos indisponível");
+   const apiCourses=await r.json();
+   if(!Array.isArray(apiCourses)||apiCourses.length===0) throw Error("API retornou catálogo vazio");
+   state.courses=apiCourses;
+  }catch(err){
+   app.innerHTML='<section class="section"><div class="empty"><h2>Não foi possível abrir a plataforma</h2><p>O catálogo de cursos não carregou. Verifique sua conexão e tente novamente.</p><button class="btn" onclick="location.reload()">Tentar novamente</button></div></section>';
+   console.error("Falha ao carregar catálogo Multiplay:",err);
+   return;
+  }
  }
  if(!state.user){updateAccount();login();return;}
  home();
