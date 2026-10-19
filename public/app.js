@@ -12,6 +12,23 @@ const state={
  token:localStorage.getItem("mp_token")||"",page:"home"
 };
 const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const normalizeText=v=>String(v??"").normalize("NFC").replace(/\\s+/g," ").trim();
+const canonicalCategory=v=>{
+ const raw=normalizeText(v),key=raw.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+ const categories={"administracao":"Administração","artes e cultura":"Artes e Cultura","desenvolvimento":"Desenvolvimento","direito":"Direito","financas":"Finanças","gestao":"Gestão","idiomas":"Idiomas","logistica":"Logística","marketing":"Marketing","negocios":"Negócios","profissionalizantes":"Profissionalizantes","recursos humanos":"Recursos Humanos","saude":"Saúde","tecnologia":"Tecnologia"};
+ return categories[key]||raw.toLocaleLowerCase("pt-BR").replace(/(^|\\s)\\p{L}/gu,m=>m.toLocaleUpperCase("pt-BR"));
+};
+const canonicalLevel=c=>{
+ const raw=normalizeText(c.level),key=raw.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
+ if(/avancad|advanced/.test(key))return "Avançado";
+ if(/intermedi|intermediate|medio/.test(key))return "Intermediário";
+ if(/iniciante|beginner|basico|basic/.test(key))return "Básico";
+ const text=(normalizeText(c.title)+" "+normalizeText(c.description)+" "+normalizeText(c.category)).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase();
+ if(/avancad|advanced|especialista|estrategic|estrategia avancada/.test(text))return "Avançado";
+ if(/intermedi|intermediate|pratico|completo|profissional|gestao de pessoas|excel para o trabalho/.test(text))return "Intermediário";
+ return "Básico";
+};
+const normalizeCourses=list=>list.map(c=>({...c,category:canonicalCategory(c.category),level:canonicalLevel(c)}));
 const lessons=c=>c?.modules?.flatMap(m=>m.lessons.map(l=>({...l,module:m.title})))||[];
 const pct=c=>{const a=lessons(c);return a.length?Math.round(a.filter(x=>state.done[c.id+"_"+x.id]).length/a.length*100):0};
 const key=()=>state.course.id+"_"+state.lesson.id;
@@ -40,7 +57,7 @@ async function init(){
   if(!r.ok) throw Error("Catálogo local indisponível");
   const localCourses=await r.json();
   if(!Array.isArray(localCourses)||localCourses.length===0) throw Error("Catálogo local vazio");
-  state.courses=localCourses;
+  state.courses=normalizeCourses(localCourses);
  }catch(_){
   try{
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
@@ -49,7 +66,7 @@ async function init(){
    if(!r.ok) throw Error("API de cursos indisponível");
    const apiCourses=await r.json();
    if(!Array.isArray(apiCourses)||apiCourses.length===0) throw Error("API retornou catálogo vazio");
-   state.courses=apiCourses;
+   state.courses=normalizeCourses(apiCourses);
   }catch(err){
    app.innerHTML='<section class="section"><div class="empty"><h2>Não foi possível abrir a plataforma</h2><p>O catálogo de cursos não carregou. Verifique sua conexão e tente novamente.</p><button class="btn" onclick="location.reload()">Tentar novamente</button></div></section>';
    console.error("Falha ao carregar catálogo Multiplay:",err);
@@ -64,7 +81,7 @@ async function init(){
   clearTimeout(t);
   if(r.ok){
    const d=await r.json();
-   if(Array.isArray(d)&&d.length){state.courses=d;home();}
+   if(Array.isArray(d)&&d.length){state.courses=normalizeCourses(d);home();}
   }
  }catch(_){}
  if(state.token&&!isLocalUser()){
@@ -99,9 +116,9 @@ function home(){
  bind();
 }function catalog(category=""){
  state.page="catalog";
- app.innerHTML='<section class="section"><div class="section-title"><div><button class="outline catalog-back" data-page="home">← Início</button><h1>Catálogo de cursos</h1><p class="muted">Pesquise por curso, área ou nível.</p></div><button class="outline filter-reset" id="resetFilters">Limpar filtros</button></div><div class="catalog-tools"><input class="field" id="q" placeholder="Buscar curso..." value=""><select class="field" id="cat"><option value="">Todas as áreas</option>'+[...new Set(state.courses.map(c=>c.category))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select><select class="field" id="level"><option value="">Todos os níveis</option><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select></div><div class="catalog-summary" id="catalogSummary"></div><div class="grid" id="grid"></div></section>';
+ app.innerHTML='<section class="section"><div class="section-title"><div><button class="outline catalog-back" data-page="home">← Início</button><h1>Catálogo de cursos</h1><p class="muted">Pesquise por curso, área ou nível.</p></div><button class="outline filter-reset" id="resetFilters">Limpar filtros</button></div><div class="catalog-tools"><input class="field" id="q" placeholder="Buscar curso..." value=""><select class="field" id="cat"><option value="">Todas as áreas</option>'+[...new Set(state.courses.map(c=>canonicalCategory(c.category)))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select><select class="field" id="level"><option value="">Todos os níveis</option><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select></div><div class="catalog-summary" id="catalogSummary"></div><div class="grid" id="grid"></div></section>';
  const q=document.getElementById("q"),cat=document.getElementById("cat"),level=document.getElementById("level");cat.value=category;
- const render=()=>{const s=q.value.trim().toLowerCase(),c=cat.value,l=level.value;const items=state.courses.filter(x=>(!s||(x.title+" "+x.category+" "+x.description).toLowerCase().includes(s))&&(!c||x.category===c)&&(!l||x.level===l)).sort((a,b)=>a.title.localeCompare(b.title,"pt-BR"));document.getElementById("catalogSummary").textContent=items.length+" curso"+(items.length===1?"":"s")+" encontrado"+(items.length===1?"":"s");document.getElementById("grid").innerHTML=items.map(card).join("")||'<div class="empty"><h3>Nenhum curso encontrado</h3><p>Altere os filtros ou toque em “Limpar filtros” para ver o catálogo completo.</p></div>';bind()};
+ const render=()=>{const s=q.value.trim().toLowerCase(),c=cat.value,l=level.value;const items=state.courses.filter(x=>(!s||(x.title+" "+x.category+" "+x.description).toLowerCase().includes(s))&&(!c||x.category===c)&&(!l||canonicalLevel(x)===l)).sort((a,b)=>a.title.localeCompare(b.title,"pt-BR"));document.getElementById("catalogSummary").textContent=items.length+" curso"+(items.length===1?"":"s")+" encontrado"+(items.length===1?"":"s");document.getElementById("grid").innerHTML=items.map(card).join("")||'<div class="empty"><h3>Nenhum curso encontrado</h3><p>Altere os filtros ou toque em “Limpar filtros” para ver o catálogo completo.</p></div>';bind()};
  [q,cat,level].forEach(x=>x.oninput=x.onchange=render);
  document.getElementById("resetFilters").onclick=()=>{q.value="";cat.value="";level.value="";render()};
  render();
